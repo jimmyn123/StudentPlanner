@@ -213,7 +213,7 @@ public class AddAssessmentsActivity extends AppCompatActivity {
     private File createImageFile() throws IOException{
         // Create a timestamp to add to the custom image name
         @SuppressLint("SimpleDateFormat") String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String namePref = "image_" + timeStamp;
+        String namePref = "image_assessments" + timeStamp;
 
         //Create the file with preset name and storage location
         File storeDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);

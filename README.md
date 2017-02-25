@@ -7,12 +7,13 @@ Features:
 - Switching activities
 - Callback methods
 - Menu inflators
-- SQLiteDatabase, DBOpenhelper, ContentProvider, Adapter classes
+- SQLiteDatabase, SQLiteOpenhelper, ContentProvider, Adapter classes
 - Loading data into a spinner
 - DatePicker for start and end dates
 - Camera to save image notes
+- SharedPreferences
+- Fragments
 
 Upcoming:
 - Validation
-- SharedPreferences
 - Date reminders

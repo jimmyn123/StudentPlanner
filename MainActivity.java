@@ -10,10 +10,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Layout;
+import android.util.AttributeSet;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -59,12 +62,12 @@ public class MainActivity extends AppCompatActivity {
 
         Button assessments = (Button) findViewById(R.id.button_Assessments);
         assessments.setOnClickListener(new View.OnClickListener(){
-
             @Override
             public void onClick(View v) {
                 openAssessments();
             }
         });
+
     }
 
     /**

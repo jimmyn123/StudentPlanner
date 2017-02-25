@@ -42,7 +42,7 @@ public class ScheduleCursorAdapter extends CursorAdapter {
      * @param context input context
      * @param cursor input cursor
      * @param parent the ViewGroup that this is contained in.
-     * @return
+     * @return returns the created layout
      */
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
