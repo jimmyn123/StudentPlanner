@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Creates the user interface for the main activity.
-     * @param savedInstanceState generated
+     * @param savedInstanceState to load again if app crashes.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
         menu.add(Menu.NONE, 1, Menu.NONE, "View Courses");
         menu.add(Menu.NONE, 2, Menu.NONE, "View Mentors");
         menu.add(Menu.NONE, 3, Menu.NONE, "View Assessments");
+        menu.add(Menu.NONE, 4, Menu.NONE, "View Settings");
         return true;
     }
 
@@ -103,6 +104,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case 3:
                 openAssessments();
+                break;
+            case 4:
+                openSettings();
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -137,6 +141,14 @@ public class MainActivity extends AppCompatActivity {
      */
     private void openAssessments() {
         Intent intent = new Intent(MainActivity.this, AssessmentsActivity.class);
+        startActivity(intent);
+    }
+
+    /**
+     * Helper function to open assessments activity.
+     */
+    private void openSettings() {
+        Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
         startActivity(intent);
     }
 }
