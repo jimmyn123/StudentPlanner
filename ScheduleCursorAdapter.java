@@ -1,7 +1,7 @@
 /**
  *A cursor adapter for the student planner app. Inflates and binds to a custom view.
  * @author Jimmy Nguyen
- * @version 2/20/2017
+ * @version 2/25/2017
  */
 package com.example.studentplanner.studentplanner;
 
