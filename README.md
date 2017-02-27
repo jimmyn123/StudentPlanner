@@ -6,7 +6,7 @@ This application is not yet finished and will be frequently updated.
 Features:
 - Switching activities
 - Callback methods
-- Menu inflators
+- Menu inflaters
 - SQLiteDatabase, SQLiteOpenhelper, ContentProvider, Adapter classes
 - Loading data into a spinner
 - DatePicker for start and end dates
@@ -17,3 +17,4 @@ Features:
 Upcoming:
 - Validation
 - Date reminders
+- Picture notes for Courses
