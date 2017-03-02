@@ -1,13 +1,23 @@
 /**
  * The main activity class. Provides navigation to the other activities.
  * @author Jimmy nguyen
- * @version 2/20/2017
+ * @version 3/1/2017
  */
 
 package com.example.studentplanner.studentplanner;
 
+import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.media.audiofx.BassBoost;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Layout;
@@ -17,6 +27,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
+
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +50,10 @@ public class MainActivity extends AppCompatActivity {
         //Finds all of the buttons and sets what happens when you click them
         Button term = (Button) findViewById(R.id.button_Terms);
         term.setOnClickListener(new View.OnClickListener() {
+            /**
+             * Anonymous class that opens the terms activity.
+             * @param v the view
+             */
             @Override
             public void onClick(View v) {
                 openTerms();
@@ -45,6 +62,10 @@ public class MainActivity extends AppCompatActivity {
 
         Button courses = (Button) findViewById(R.id.button_Courses);
         courses.setOnClickListener(new View.OnClickListener() {
+            /**
+             * Anonymous class that opens the courses activity.
+             * @param v the view
+             */
             @Override
             public void onClick(View v) {
                 openCourses();
@@ -53,7 +74,10 @@ public class MainActivity extends AppCompatActivity {
 
         Button mentors = (Button) findViewById(R.id.button_Mentors);
         mentors.setOnClickListener(new View.OnClickListener(){
-
+            /**
+             * Anonymous class that opens the mentors activity.
+             * @param v the view
+             */
             @Override
             public void onClick(View v) {
                 openMentors();
@@ -62,12 +86,73 @@ public class MainActivity extends AppCompatActivity {
 
         Button assessments = (Button) findViewById(R.id.button_Assessments);
         assessments.setOnClickListener(new View.OnClickListener(){
+            /**
+             * Anonymous class that opens the assessments activity.
+             * @param v the view
+             */
             @Override
             public void onClick(View v) {
                 openAssessments();
             }
         });
 
+    }
+
+    /**
+     * When the activity starts, make sure to set the alarms and cancels alarms depending on the
+     * set SharedPreferences.
+     */
+    @Override
+    protected void onStart() {
+        // Calls the super for onStart first
+        super.onStart();
+
+        // Gets the SharedPreferences
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean notifications = sp.getBoolean("notifications",true);
+
+        // Queries the database for the courses and end dates
+        Cursor cursor = getContentResolver().query(
+                ScheduleProvider.CONTENT_COURSES_URI, null, null, null, null);
+
+        // This only runs if there is a result
+        if (cursor != null) {
+            try { // Runs only if there is something in cursor
+                int alarmID = 0;
+                while (cursor.moveToNext()) {
+                    // Creates a calendar to hold current instance
+                    Calendar c = Calendar.getInstance();
+
+                    // Gets the end date to set reminder
+                    String[] date = cursor.getString(
+                            cursor.getColumnIndex(DBOpenHelper.COURSE_END)).split("/");
+                    // Sets the date of the reminder
+                    c.set(Integer.parseInt(date[2]),
+                            (Integer.parseInt(date[1]) - 1), Integer.parseInt(date[0]));
+
+                    // New intent and to get a PendingIntent
+                    Intent intent = new Intent(this, AlarmReceiver.class);
+                    // Adds the name nad alarm ID into the extras
+                    intent.putExtra("course",
+                            cursor.getString(cursor.getColumnIndex(DBOpenHelper.COURSE_NAME)));
+                    intent.putExtra("alarmID", alarmID);
+                    // Gets a PendingIntent that sends a broadcast
+                    PendingIntent pi = PendingIntent.getBroadcast(this, alarmID, intent,
+                            PendingIntent.FLAG_CANCEL_CURRENT);
+
+                    // Gets an alarm manager and cancels every set alarm
+                    AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                    am.cancel(pi);
+                    // Only sets a new alarm if notifications is set to true in preferences
+                    if(notifications) am.set(AlarmManager.RTC, c.getTimeInMillis(), pi);
+                    // Increments for the alarmID
+                    alarmID += 1;
+                }
+            } finally {
+                // Closes the cursor
+                cursor.close();
+            }
+        }
     }
 
     /**
