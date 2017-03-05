@@ -1,7 +1,7 @@
 /**
  * The Activity for adding and displaying the details of a course to the DB
  * @author Jimmy Nguyen
- * @version 3/1/2017
+ * @version 3/5/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -9,15 +9,19 @@ import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -28,19 +32,26 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class AddCoursesActivity extends AppCompatActivity
         implements DatePickerDialog.OnDateSetListener {
 
     // sets fields that will be used in multiple methods
     private EditText courseNameEditor, startEditor, endEditor, statusEditor, dateDisplay;
-    private String action, filter, startDate, endDate;
+    private String action, filter, startDate, endDate, savedEndDate;
     private boolean start;
+    private Drawable editTextBackground;
+
+    // Regex for date
+    private final String DATE_PATTERN = "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}";
 
     /**
      * Shows the add form if it is adding a new entry.
@@ -79,6 +90,9 @@ public class AddCoursesActivity extends AppCompatActivity
         startEditor = (EditText) findViewById(R.id.startDateCourses);
         endEditor = (EditText) findViewById(R.id.endDateCourses);
         statusEditor = (EditText) findViewById(R.id.courseStatus);
+
+        // Gets the editText default background
+        editTextBackground = courseNameEditor.getBackground();
 
         // Finds the mentors button and opens the mentors activity when clicked
         Button mentors = (Button) findViewById(R.id.button_mentors);
@@ -122,6 +136,41 @@ public class AddCoursesActivity extends AppCompatActivity
             cursor.close();
         }
 
+        // If there are no terms, prompt the user to add a term
+        if(terms.size() == 0) {
+            // Creates a new listener for dialog interfaces.
+            DialogInterface.OnClickListener dialogClickListener =
+                    new DialogInterface.OnClickListener(){
+                /**
+                 * Anonymous class implementation of what to do when the user OKs the delete.
+                 * @param dialog the dialog interface
+                 * @param which which button is pressed
+                 */
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // Goes to the AddTermsActivity if the user wants to add
+                    if(which == DialogInterface.BUTTON_POSITIVE){
+                        Intent intent = new Intent(AddCoursesActivity.this, AddTermsActivity.class);
+                        // Creates the backstack and sets parent to Terms activity
+                        TaskStackBuilder stackBuilder =
+                                TaskStackBuilder.create(AddCoursesActivity.this);
+                        stackBuilder.addNextIntentWithParentStack(intent);
+                        stackBuilder.startActivities();
+                    }
+                    else {
+                        // Goes back to courses activity if the user doesn't want to add term
+                        finish();
+                    }
+                }
+            };
+            // The pop up dialogue verifying
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("No terms added, add terms?")
+                    .setPositiveButton(getString(android.R.string.yes), dialogClickListener)
+                    .setNegativeButton(getString(android.R.string.cancel), dialogClickListener)
+                    .show();
+        }
+
         // Create an adapter for the data and place it in a pre-defined layout
         ArrayAdapter<Integer> adapter = new ArrayAdapter<>(this,
                 R.layout.spinner_item, terms);
@@ -153,16 +202,19 @@ public class AddCoursesActivity extends AppCompatActivity
                 // Move to the beginning and load all of the data from the DB to the views
                 cursor.moveToFirst();
 
-                String courseName = cursor.getString(cursor.getColumnIndex(DBOpenHelper.COURSE_NAME));
+                String courseName = cursor.getString(
+                        cursor.getColumnIndex(DBOpenHelper.COURSE_NAME));
                 courseNameEditor.setText(courseName);
 
                 startDate = cursor.getString(cursor.getColumnIndex(DBOpenHelper.COURSE_START));
                 startEditor.setText(startDate);
 
-                endDate = cursor.getString(cursor.getColumnIndex(DBOpenHelper.COURSE_END));
-                endEditor.setText(endDate);
+                savedEndDate = cursor.getString(cursor.getColumnIndex(DBOpenHelper.COURSE_END));
+                endDate = savedEndDate;
+                endEditor.setText(savedEndDate);
 
-                String courseStatus = cursor.getString(cursor.getColumnIndex(DBOpenHelper.COURSE_STATUS));
+                String courseStatus = cursor.getString(
+                        cursor.getColumnIndex(DBOpenHelper.COURSE_STATUS));
                 statusEditor.setText(courseStatus);
 
                 // This sets the spinner to the specific term
@@ -223,7 +275,11 @@ public class AddCoursesActivity extends AppCompatActivity
         switch (action) {
             case Intent.ACTION_INSERT:
                 // If the action is insert and the course isn't blank, add course
-                if (fromEditor.length() != 0) insertCourse();
+                if (fromEditor.length() != 0){
+                    insertCourse();
+                } else {
+                    finish();
+                }
                 break;
             case Intent.ACTION_EDIT:
                 // If the action is edit and the course is blank, delete, else update
@@ -234,23 +290,32 @@ public class AddCoursesActivity extends AppCompatActivity
                 }
                 break;
         }
-        finish();
     }
 
     /**
      * Helper function that inserts the values from the screen using the set ContentResolver.
      */
     private void insertCourse() {
-        ContentValues cv = getValues();
-        getContentResolver().insert(ScheduleProvider.CONTENT_COURSES_URI, cv);
+        if(validate()) {
+            ContentValues cv = getValues();
+            getContentResolver().insert(ScheduleProvider.CONTENT_COURSES_URI, cv);
+            updateAlarms();
+            finish();
+        }
     }
+
 
     /**
      * Helper function that updates the selection from the screen using the set ContentResolver.
      */
     private void updateCourse() {
-        ContentValues cv = getValues();
-        getContentResolver().update(ScheduleProvider.CONTENT_COURSES_URI, cv, filter, null);
+        if(validate()) {
+            ContentValues cv = getValues();
+            getContentResolver().update(ScheduleProvider.CONTENT_COURSES_URI, cv, filter, null);
+            // Only updates the alarm if the end dates are different
+            if (!savedEndDate.equals(endDate)) updateAlarms();
+            finish();
+        }
     }
 
     /**
@@ -279,6 +344,54 @@ public class AddCoursesActivity extends AppCompatActivity
     }
 
     /**
+     * Helper function that returns whether a field is valid or not.
+     * @return returns whether fields are validated
+     */
+    private boolean validate() {
+        // Resets the borders
+        resetBorders();
+
+        // Default everything is right
+        Boolean matches = true;
+
+        // Compiles the name pattern
+        Pattern pattern = Pattern.compile(DATE_PATTERN);
+        Matcher matcher = pattern.matcher(startEditor.getText().toString());
+
+        // Checks to see if start date matches the pattern
+        if(!matcher.matches()){
+            matches = false;
+            // Highlight the editor red
+            startEditor.setBackgroundResource(R.drawable.invalid_border);
+            Toast.makeText(this,
+                    "Invalid start date, please try again.", Toast.LENGTH_SHORT).show();
+        }
+
+        // New matcher
+        matcher = pattern.matcher(endEditor.getText().toString());
+        // Checks to see if end date matches the pattern
+        if(!matcher.matches()){
+            matches = false;
+            // Highlight the editor red
+            endEditor.setBackgroundResource(R.drawable.invalid_border);
+            Toast.makeText(this,
+                    "Invalid end date, please try again.", Toast.LENGTH_SHORT).show();
+        }
+
+        return matches;
+    }
+
+    /**
+     * Helper function that resets the background to the original.
+     */
+    private void resetBorders() {
+        // Changes all of the backgrounds of the borders back
+        courseNameEditor.setBackground(editTextBackground);
+        startEditor.setBackground(editTextBackground);
+        endEditor.setBackground(editTextBackground);
+    }
+
+    /**
      * Helper function that resets the alarms if an item was modified or deleted.
      */
     private void updateAlarms() {
@@ -295,15 +408,18 @@ public class AddCoursesActivity extends AppCompatActivity
             try { // Runs only if there is something in cursor
                 int alarmID = 0;
                 while (cursor.moveToNext()) {
+                    // Gets today's date
+                    Calendar today = Calendar.getInstance();
+
                     // Creates a calendar to hold current instance
-                    Calendar c = Calendar.getInstance();
+                    Calendar alarm = Calendar.getInstance();
 
                     // Gets the end date to set reminder
                     String[] date = cursor.getString(
                             cursor.getColumnIndex(DBOpenHelper.COURSE_END)).split("/");
                     // Sets the date of the reminder
-                    c.set(Integer.parseInt(date[2]),
-                            (Integer.parseInt(date[1]) - 1), Integer.parseInt(date[0]));
+                    alarm.set(Integer.parseInt(date[2]),
+                            (Integer.parseInt(date[0])-1), Integer.parseInt(date[1]));
 
                     // New intent and to get a PendingIntent
                     Intent intent = new Intent(this, AlarmReceiver.class);
@@ -318,8 +434,12 @@ public class AddCoursesActivity extends AppCompatActivity
                     // Gets an alarm manager and cancels every set alarm
                     AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
                     am.cancel(pi);
-                    // Only sets a new alarm if notifications is set to true in preferences
-                    if(notifications) am.set(AlarmManager.RTC, c.getTimeInMillis() + 10000, pi);
+                    // Sets alarm if the date has not passed yet.
+                    if(alarm.after(today)) {
+                        // Only sets a new alarm if notifications is set to true in preferences
+                        alarm.add(Calendar.DAY_OF_MONTH, -1);
+                        if (notifications) am.set(AlarmManager.RTC, alarm.getTimeInMillis(), pi);
+                    }
                     // Increments for the alarmID
                     alarmID += 1;
                 }

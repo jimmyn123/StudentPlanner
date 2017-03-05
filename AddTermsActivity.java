@@ -10,6 +10,7 @@ import android.app.DatePickerDialog;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -20,9 +21,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class AddTermsActivity extends AppCompatActivity
         implements DatePickerDialog.OnDateSetListener{
@@ -31,6 +35,10 @@ public class AddTermsActivity extends AppCompatActivity
     private EditText termEditor, startEditor, endEditor, dateDisplay;
     private String action, termFilter, startDate, endDate;
     private boolean start;
+    private Drawable editTextBackground;
+
+    // Regex for date
+    private final String DATE_PATTERN = "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}";
 
     /**
      * Shows the add form if it is adding a new entry.
@@ -67,6 +75,9 @@ public class AddTermsActivity extends AppCompatActivity
         termEditor = (EditText) findViewById(R.id.editText);
         startEditor = (EditText) findViewById(R.id.startDateText);
         endEditor = (EditText) findViewById(R.id.endDateText);
+
+        // Gets the editText default background
+        editTextBackground = termEditor.getBackground();
 
         // Gets the intent from the previous activity
         Intent intent = getIntent();
@@ -168,22 +179,28 @@ public class AddTermsActivity extends AppCompatActivity
                     updateTerm(termNumber);
                 }
         }
-        finish();
     }
 
     /**
      * Helper function that inserts the values from the screen using the set ContentResolver.
      */
     private void insertTerm(Integer termNumber){
-        ContentValues values = getValues(termNumber);
-        getContentResolver().insert(ScheduleProvider.CONTENT_TERMS_URI, values);
+        if(validate()) {
+            ContentValues values = getValues(termNumber);
+            getContentResolver().insert(ScheduleProvider.CONTENT_TERMS_URI, values);
+            finish();
+        }
     }
     /**
      * Helper function that updates the selection from the screen using the set ContentResolver.
      */
     private void updateTerm(Integer termNumber){
-        ContentValues values = getValues(termNumber);
-        getContentResolver().update(ScheduleProvider.CONTENT_TERMS_URI, values, termFilter, null);
+        if(validate()) {
+            ContentValues values = getValues(termNumber);
+            getContentResolver().update(ScheduleProvider.CONTENT_TERMS_URI,
+                    values, termFilter, null);
+            finish();
+        }
     }
 
     /**
@@ -205,6 +222,55 @@ public class AddTermsActivity extends AppCompatActivity
         values.put(DBOpenHelper.TERM_START, startDate);
         values.put(DBOpenHelper.TERM_END, endDate);
         return values;
+    }
+
+
+    /**
+     * Helper function that returns whether a field is valid or not.
+     * @return returns whether fields are validated
+     */
+    private boolean validate() {
+        // Resets the borders
+        resetBorders();
+
+        // Default everything is right
+        Boolean matches = true;
+
+        // Compiles the name pattern
+        Pattern pattern = Pattern.compile(DATE_PATTERN);
+        Matcher matcher = pattern.matcher(startEditor.getText().toString());
+
+        // Checks to see if start date matches the pattern
+        if(!matcher.matches()){
+            matches = false;
+            // Highlight the editor red
+            startEditor.setBackgroundResource(R.drawable.invalid_border);
+            Toast.makeText(this,
+                    "Invalid start date, please try again.", Toast.LENGTH_SHORT).show();
+        }
+
+        // New matcher
+        matcher = pattern.matcher(endEditor.getText().toString());
+        // Checks to see if end date matches the pattern
+        if(!matcher.matches()){
+            matches = false;
+            // Highlight the editor red
+            endEditor.setBackgroundResource(R.drawable.invalid_border);
+            Toast.makeText(this,
+                    "Invalid end date, please try again.", Toast.LENGTH_SHORT).show();
+        }
+
+        return matches;
+    }
+
+    /**
+     * Helper function that resets the background to the original.
+     */
+    private void resetBorders() {
+        // Changes all of the backgrounds of the borders back
+        termEditor.setBackground(editTextBackground);
+        startEditor.setBackground(editTextBackground);
+        endEditor.setBackground(editTextBackground);
     }
 
     /**

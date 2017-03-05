@@ -22,3 +22,5 @@ This application is not yet finished and will be frequently updated.
 Upcoming:
 - Validation
 - Picture notes for Courses
+- Opening email services
+- Add horizontal layout

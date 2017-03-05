@@ -140,8 +140,9 @@ implements LoaderManager.LoaderCallbacks<Cursor>{
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // Deletes everything if it is confirmed
-                if(which == DialogInterface.BUTTON_POSITIVE){getContentResolver()
-                        .delete(ScheduleProvider.CONTENT_ASSESSMENTS_URI, null, null);
+                if(which == DialogInterface.BUTTON_POSITIVE){
+                    getContentResolver()
+                            .delete(ScheduleProvider.CONTENT_ASSESSMENTS_URI, null, null);
                 }
             }
         };

@@ -1,17 +1,17 @@
 /**
  * The Activity for adding and displaying the details of a mentor to the DB
  * @author Jimmy Nguyen
- * @version 2/21/2017
+ * @version 3/2/2017
  */
 package com.example.studentplanner.studentplanner;
 
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -22,9 +22,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class AddMentorsActivity extends AppCompatActivity {
 
@@ -36,6 +39,19 @@ public class AddMentorsActivity extends AppCompatActivity {
     private Spinner spinner;
     private ArrayAdapter<String> adapter;
     private Boolean resetButton = false;
+    private Drawable editTextBackground;
+
+    // Regex for name pattern
+    private final String NAME_PATTERN =
+            "[_A-Za-z-\'\\s\\+]+";
+
+    // Regex for phone pattern
+    private final String PHONE_PATTERN = "[0-9]{10}";
+
+    // Regex for email pattern
+    private final String EMAIL_PATTERN =
+            "[_A-Za-z-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+                    + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
 
     /**
      * Shows the add form if it is adding a new entry.
@@ -58,8 +74,6 @@ public class AddMentorsActivity extends AppCompatActivity {
              */
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Saving...", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
                 finishEditing();
             }
         });
@@ -76,6 +90,9 @@ public class AddMentorsActivity extends AppCompatActivity {
         numberEditor = (EditText) findViewById(R.id.mentorPhone);
         coursesEditor = (TextView) findViewById(R.id.coursesMentored);
         addCourses = (Button) findViewById(R.id.button_Add_Courses);
+
+        // Gets the original background
+        editTextBackground = nameEditor.getBackground();
 
         // Get the contents of the courses table and put it in a cursor
         Cursor cursor = getContentResolver().query(ScheduleProvider.CONTENT_COURSES_URI,
@@ -284,23 +301,28 @@ public class AddMentorsActivity extends AppCompatActivity {
                 }
                 break;
         }
-        finish();
     }
 
     /**
      * Helper function that inserts the values from the screen using the set ContentResolver.
      */
     private void insertMentor() {
-        ContentValues cv = getValues();
-        getContentResolver().insert(ScheduleProvider.CONTENT_MENTORS_URI, cv);
+        if(validate()) {
+            ContentValues cv = getValues();
+            getContentResolver().insert(ScheduleProvider.CONTENT_MENTORS_URI, cv);
+            finish();
+        }
     }
 
     /**
      * Helper function that updates the selection from the screen using the set ContentResolver.
      */
     private void updateMentor() {
-        ContentValues cv = getValues();
-        getContentResolver().update(ScheduleProvider.CONTENT_MENTORS_URI, cv, termFilter, null);
+        if(validate()) {
+            ContentValues cv = getValues();
+            getContentResolver().update(ScheduleProvider.CONTENT_MENTORS_URI, cv, termFilter, null);
+            finish();
+        }
     }
 
     /**
@@ -323,5 +345,70 @@ public class AddMentorsActivity extends AppCompatActivity {
         cv.put(DBOpenHelper.MENTOR_NUMBER, numberEditor.getText().toString());
         cv.put(DBOpenHelper.MENTOR_COURSES, coursesEditor.getText().toString());
         return cv;
+    }
+
+    /**
+     * Helper function that returns whether a field is valid or not.
+      * @return if something is not properly validated
+     */
+    private boolean validate() {
+        // Resets the borders
+        resetBorders();
+
+        // Default everything is right
+        Boolean matches = true;
+
+        // Compiles the name pattern
+        Pattern pattern = Pattern.compile(NAME_PATTERN);
+        Matcher matcher = pattern.matcher(nameEditor.getText().toString());
+
+        // Checks to see if name matches the pattern
+        if(!matcher.matches()){
+            matches = false;
+            // Highlight the editor red
+            nameEditor.setBackgroundResource(R.drawable.invalid_border);
+            Toast.makeText(this,
+                    "Invalid name format, please try again.", Toast.LENGTH_SHORT).show();
+        }
+
+        // Compiles the phone pattern
+        pattern = Pattern.compile(PHONE_PATTERN);
+        matcher = pattern.matcher(numberEditor.getText().toString());
+
+        // Checks to see if phone matches the pattern
+        if(!matcher.matches()){
+            matches = false;
+            // Highlight the editor red
+            numberEditor.setBackgroundResource(R.drawable.invalid_border);
+            Toast.makeText(this,
+                    "Invalid phone number format, please enter a 10 digit number.",
+                    Toast.LENGTH_SHORT).show();
+        }
+
+        // Compiles the email pattern
+        pattern = Pattern.compile(EMAIL_PATTERN);
+        matcher = pattern.matcher(emailEditor.getText().toString());
+
+        // Checks to see if email matches the pattern
+        if(!matcher.matches()){
+            matches = false;
+            // Highlight the editor red
+            emailEditor.setBackgroundResource(R.drawable.invalid_border);
+            Toast.makeText(this,
+                    "Invalid email format, please try again.", Toast.LENGTH_SHORT).show();
+        }
+
+        // Returns the boolean
+        return matches;
+    }
+
+    /**
+     * Helper function that resets the background to the original.
+     */
+    private void resetBorders() {
+        // Changes all of the backgrounds of the borders back
+        nameEditor.setBackground(editTextBackground);
+        numberEditor.setBackground(editTextBackground);
+        emailEditor.setBackground(editTextBackground);
     }
 }
