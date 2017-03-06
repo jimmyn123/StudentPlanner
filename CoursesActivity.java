@@ -1,3 +1,10 @@
+/**
+ * Course activity. Displays the added courses and loads it from the database.
+ *
+ * @author Jimmy Nguyen
+ * @version 2/21/2017
+ */
+
 package com.example.studentplanner.studentplanner;
 
 import android.content.DialogInterface;
@@ -141,12 +148,15 @@ public class CoursesActivity extends AppCompatActivity
                 // Deletes everything if it is confirmed
                 if(which == DialogInterface.BUTTON_POSITIVE){
                     getContentResolver().delete(ScheduleProvider.CONTENT_COURSES_URI, null, null);
+                    getContentResolver().delete(ScheduleProvider.CONTENT_MENTORS_URI, null, null);
+                    getContentResolver().delete(ScheduleProvider.CONTENT_ASSESSMENTS_URI,
+                            null, null);
                 }
             }
         };
         // The pop up dialogue verifying
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Are you sure?")
+        builder.setMessage("Warning: This will delete all assessments, and mentors as well.")
                 .setPositiveButton(getString(android.R.string.yes), dialogClickListener)
                 .setNegativeButton(getString(android.R.string.cancel), dialogClickListener).show();
     }

@@ -1,7 +1,7 @@
 /**
  * The helper class used to create and access the internal database.
  * @author Jimmy nguyen
- * @version 2/20/2017
+ * @version 3/5/2017
  */
 
 package com.example.studentplanner.studentplanner;
@@ -15,7 +15,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DBOpenHelper extends SQLiteOpenHelper {
     // Database name and version constants
     private static final String DATABASE_NAME = "schedule.db";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 7;
 
     // Column names for the terms table
     public static final String TABLE_TERMS = "terms";
@@ -43,18 +43,20 @@ public class DBOpenHelper extends SQLiteOpenHelper {
     public static final String COURSE_START = "courseStart";
     public static final String COURSE_END = "courseEnd";
     public static final String COURSE_STATUS = "courseStatus";
+    public static final String COURSE_PICTURE = "coursePicture";
     public static final String COURSE_CREATED = "courseCreated";
 
     // Array of all the columns in terms
     static final String[] COURSES_COLUMNS = {COURSE_ID, COURSE_TERM_ID, COURSE_NAME,
-            COURSE_START, COURSE_END, COURSE_STATUS,COURSE_CREATED};
+            COURSE_START, COURSE_END, COURSE_STATUS, COURSE_PICTURE, COURSE_CREATED};
 
     // The sql statement to create the courses table
     private static final String COURSES_CREATE = "CREATE TABLE " + TABLE_COURSES + " (" +
             COURSE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-            COURSE_TERM_ID + " INTEGER, " +
-            COURSE_NAME + " TEXT, " + COURSE_START + " TEXT, " + COURSE_END + " TEXT, " +
-            COURSE_STATUS + " TEXT, " + COURSE_CREATED + " TEXT default CURRENT_TIMESTAMP" + ")";
+            COURSE_TERM_ID + " INTEGER, " + COURSE_NAME + " TEXT, " +
+            COURSE_START + " TEXT, " + COURSE_END + " TEXT, " +
+            COURSE_STATUS + " INTEGER, " + COURSE_PICTURE + " TEXT, " +
+            COURSE_CREATED + " TEXT default CURRENT_TIMESTAMP" + ")";
 
     // Column names for the mentors table
     public static final String TABLE_MENTORS = "mentors";
@@ -79,7 +81,7 @@ public class DBOpenHelper extends SQLiteOpenHelper {
     // Column names for the assessments table
     public static final String TABLE_ASSESSMENTS = "assessments";
     public static final String ASSESSMENT_ID = "_id";
-    public static final String ASSESSMENT_NAME = "assessmentName";
+    public static final String ASSESSMENT_COURSE = "assessmentName";
     public static final String ASSESSMENT_COURSE_ID = "assessmentCourseID";
     public static final String ASSESSMENT_TYPE = "assessmentType";
     public static final String ASSESSMENT_DUE_DATE = "assessmentDueDate";
@@ -88,15 +90,15 @@ public class DBOpenHelper extends SQLiteOpenHelper {
     public static final String ASSESSMENT_CREATED = "assessmentCreated";
 
     // Array of all the columns in assessments
-    public static final String[] ASSESSMENT_COLUMNS = {ASSESSMENT_ID, ASSESSMENT_NAME,
+    public static final String[] ASSESSMENT_COLUMNS = {ASSESSMENT_ID, ASSESSMENT_COURSE,
             ASSESSMENT_COURSE_ID, ASSESSMENT_TYPE, ASSESSMENT_DUE_DATE, ASSESSMENT_NOTES,
             ASSESSMENT_PICTURE, ASSESSMENT_CREATED};
 
     // The sql statement to create the assessments table
     public static final String ASSESSMENTS_CREATE = "CREATE TABLE " + TABLE_ASSESSMENTS +
             " (" + ASSESSMENT_ID  + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-            ASSESSMENT_NAME + " TEXT, " + ASSESSMENT_COURSE_ID + " INTEGER, " +
-            ASSESSMENT_TYPE + " TEXT, " + ASSESSMENT_DUE_DATE + " TEXT, " +
+            ASSESSMENT_COURSE + " TEXT, " + ASSESSMENT_COURSE_ID + " INTEGER, " +
+            ASSESSMENT_TYPE + " INTEGER, " + ASSESSMENT_DUE_DATE + " TEXT, " +
             ASSESSMENT_NOTES + " TEXT, " + ASSESSMENT_PICTURE + " TEXT, " +
             ASSESSMENT_CREATED + " TEXT default CURRENT_TIMESTAMP" + ")";
 

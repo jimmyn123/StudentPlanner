@@ -1,3 +1,10 @@
+/**
+ * Mentors activity. Displays the added mentors and loads it from the database.
+ *
+ * @author Jimmy Nguyen
+ * @version 3/5/2017
+ */
+
 package com.example.studentplanner.studentplanner;
 
 import android.content.DialogInterface;

@@ -1,3 +1,10 @@
+/**
+ * Assessments activity. Displays the added assessments and loads it from the database.
+ *
+ * @author Jimmy Nguyen
+ * @version 3/5/2017
+ */
+
 package com.example.studentplanner.studentplanner;
 
 import android.content.DialogInterface;

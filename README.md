@@ -10,7 +10,7 @@ This application is not yet finished and will be frequently updated.
 - SQLiteDatabase, SQLiteOpenhelper, ContentProvider, Adapter classes
 - Loading data into a spinner
 - DatePicker for start and end dates
-- Camera to save image notes
+- Camera to save image notes (Courses and Assessments Activity)
 - SharedPreferences
 - Fragments
 - Date reminders for courses
@@ -18,9 +18,10 @@ This application is not yet finished and will be frequently updated.
 - PendingIntents
 - AlarmManager
 - NotificationManager
+- Input field validation
+- WindowSoftInput states in manifest
+- Open email if the device has the PackageManager
+- Use custom app icon
 
 Upcoming:
-- Validation
-- Picture notes for Courses
-- Opening email services
 - Add horizontal layout

@@ -1,19 +1,21 @@
 /**
  * The Activity for adding and displaying the details of a term to the DB
  * @author Jimmy Nguyen
- * @version 2/21/2017
+ * @version 3/5/2017
  */
 package com.example.studentplanner.studentplanner;
 
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -34,6 +36,7 @@ public class AddTermsActivity extends AppCompatActivity
     // sets fields that will be used in multiple methods
     private EditText termEditor, startEditor, endEditor, dateDisplay;
     private String action, termFilter, startDate, endDate;
+    private Calendar startCal, endCal;
     private boolean start;
     private Drawable editTextBackground;
 
@@ -108,8 +111,20 @@ public class AddTermsActivity extends AppCompatActivity
                 startDate = cursor.getString(cursor.getColumnIndex(DBOpenHelper.TERM_START));
                 startEditor.setText(startDate);
 
+                // Splits the start date and creates the calendar date object
+                String[] d = startDate.split("/");
+                startCal = Calendar.getInstance();
+                startCal.set(Integer.parseInt(d[2]),
+                        (Integer.parseInt(d[0])-1), Integer.parseInt(d[1]));
+
                 endDate = cursor.getString(cursor.getColumnIndex(DBOpenHelper.TERM_END));
                 endEditor.setText(endDate);
+
+                // Splits the end date and creates the calendar date object
+                d = endDate.split("/");
+                endCal = Calendar.getInstance();
+                endCal.set(Integer.parseInt(d[2]),
+                        Integer.parseInt(d[0])-1, Integer.parseInt(d[1]));
 
                 // Closing the resource
                 cursor.close();
@@ -168,6 +183,8 @@ public class AddTermsActivity extends AppCompatActivity
                 if(fromEditor.length() != 0){
                     int termNumber = Integer.parseInt(fromEditor);
                     insertTerm(termNumber);
+                } else {
+                    finish();
                 }
                 break;
             case Intent.ACTION_EDIT:
@@ -186,9 +203,14 @@ public class AddTermsActivity extends AppCompatActivity
      */
     private void insertTerm(Integer termNumber){
         if(validate()) {
-            ContentValues values = getValues(termNumber);
-            getContentResolver().insert(ScheduleProvider.CONTENT_TERMS_URI, values);
-            finish();
+            if(dateOkay()) {
+                ContentValues values = getValues(termNumber);
+                getContentResolver().insert(ScheduleProvider.CONTENT_TERMS_URI, values);
+                finish();
+            } else {
+                Toast.makeText(this, "End date must be after start date",
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
     /**
@@ -196,10 +218,15 @@ public class AddTermsActivity extends AppCompatActivity
      */
     private void updateTerm(Integer termNumber){
         if(validate()) {
-            ContentValues values = getValues(termNumber);
-            getContentResolver().update(ScheduleProvider.CONTENT_TERMS_URI,
-                    values, termFilter, null);
-            finish();
+            if(dateOkay()) {
+                ContentValues values = getValues(termNumber);
+                getContentResolver().update(ScheduleProvider.CONTENT_TERMS_URI,
+                        values, termFilter, null);
+                finish();
+            } else {
+                Toast.makeText(this, "End date must be after start date",
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -207,8 +234,34 @@ public class AddTermsActivity extends AppCompatActivity
      * Helper function that deletes the selection from the screen using the set ContentResolver.
      */
     private void deleteTerm(){
-        getContentResolver().delete(ScheduleProvider.CONTENT_TERMS_URI, termFilter, null);
-        finish();
+
+        // Creates a new listener for dialog interfaces.
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener(){
+            /**
+             * Anonymous class implementation of what to do when the user OKs the delete.
+             * @param dialog the dialog interface
+             * @param which which button is pressed
+             */
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Deletes everything if it is confirmed
+                if(which == DialogInterface.BUTTON_POSITIVE){
+                    getContentResolver().delete(ScheduleProvider.CONTENT_TERMS_URI,
+                            termFilter, null);
+                    getContentResolver().delete(ScheduleProvider.CONTENT_COURSES_URI, null, null);
+                    getContentResolver().delete(ScheduleProvider.CONTENT_MENTORS_URI, null, null);
+                    getContentResolver().delete(ScheduleProvider.CONTENT_ASSESSMENTS_URI,
+                            null, null);
+                    finish();
+                }
+            }
+        };
+        // The pop up dialogue verifying
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Warning: This will reset all courses," +
+                " assessments, and mentors as well.")
+                .setPositiveButton(getString(android.R.string.yes), dialogClickListener)
+                .setNegativeButton(getString(android.R.string.cancel), dialogClickListener).show();
     }
 
     /**
@@ -274,6 +327,15 @@ public class AddTermsActivity extends AppCompatActivity
     }
 
     /**
+     * Helper function that returns true if end date is after start date.
+     * @return if end is after start
+     */
+    private boolean dateOkay() {
+        return endCal.after(startCal);
+    }
+
+
+    /**
      * Opens a DatePicker each time a specific button is clicked.
      * @param view input view
      */
@@ -315,8 +377,10 @@ public class AddTermsActivity extends AppCompatActivity
         String date = sdf.format(d.getTime());
         // Sets the start or end date appropriately
         if(start) {
+            startCal = d;
             startDate = date;
         } else {
+            endCal = d;
             endDate = date;
         }
         // Displays the date on the textView

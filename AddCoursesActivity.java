@@ -5,6 +5,7 @@
  */
 package com.example.studentplanner.studentplanner;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
@@ -15,12 +16,22 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
+import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -31,12 +42,16 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,8 +60,14 @@ public class AddCoursesActivity extends AppCompatActivity
         implements DatePickerDialog.OnDateSetListener {
 
     // sets fields that will be used in multiple methods
-    private EditText courseNameEditor, startEditor, endEditor, statusEditor, dateDisplay;
-    private String action, filter, startDate, endDate, savedEndDate;
+    private static final int CAMERA_REQUEST_CODE = 777;
+    private EditText courseNameEditor, startEditor, endEditor, dateDisplay;
+    private String action, filter, startDate, endDate, savedEndDate, imagePath;
+    private Calendar startCal, endCal;
+    private int courseStatusID;
+    private Spinner courseStatus;
+    private ArrayAdapter<String> adapterStatus;
+    private ImageView iv;
     private boolean start;
     private Drawable editTextBackground;
 
@@ -89,10 +110,57 @@ public class AddCoursesActivity extends AppCompatActivity
         courseNameEditor = (EditText) findViewById(R.id.courseName);
         startEditor = (EditText) findViewById(R.id.startDateCourses);
         endEditor = (EditText) findViewById(R.id.endDateCourses);
-        statusEditor = (EditText) findViewById(R.id.courseStatus);
+        iv = (ImageView) findViewById(R.id.imageView);
 
         // Gets the editText default background
         editTextBackground = courseNameEditor.getBackground();
+
+        // Create and populate an array of course types
+        List<String> listStatus = new ArrayList<>();
+        listStatus.add("In Progress");
+        listStatus.add("Completed");
+        listStatus.add("Dropped");
+        listStatus.add("Plan to take");
+
+        // Create an adapterCourse for the data and place it in a pre-defined layout
+        adapterStatus = new ArrayAdapter<>(this, R.layout.spinner_item, listStatus);
+
+        // Finds the assessment type view and sets the adapterCourse to display the data
+        courseStatus = (Spinner) findViewById(R.id.courseStatus);
+        courseStatus.setAdapter(adapterStatus);
+
+        // Finds the button that adds a picture
+        Button addPicture = (Button) findViewById(R.id.button_Photo_Note);
+        addPicture.setOnClickListener(new View.OnClickListener() {
+            /**
+             * Anonymous class for the button that deals with what happens when you click it
+             * @param v the view
+             */
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    // Check manifest for permission to use camera
+                    if (checkSelfPermission(Manifest.permission.CAMERA)
+                            != PackageManager.PERMISSION_GRANTED){
+                        // If permission has not been set, manually ask for permission
+                        requestPermissions(new String[]{Manifest.permission.CAMERA},
+                                CAMERA_REQUEST_CODE);
+                    }
+                    else{
+                        openCamera();
+                    }
+                }
+                else {
+                    // All other SDKs already have permission when the app installs
+                    openCamera();
+                }
+            }
+        });
+
+        // Disables the button if the phone doesn't have a camera
+        if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
+            addPicture.setEnabled(false);
+        }
 
         // Finds the mentors button and opens the mentors activity when clicked
         Button mentors = (Button) findViewById(R.id.button_mentors);
@@ -165,7 +233,7 @@ public class AddCoursesActivity extends AppCompatActivity
             };
             // The pop up dialogue verifying
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("No terms added, add terms?")
+            builder.setMessage("No terms added, add term?")
                     .setPositiveButton(getString(android.R.string.yes), dialogClickListener)
                     .setNegativeButton(getString(android.R.string.cancel), dialogClickListener)
                     .show();
@@ -209,22 +277,182 @@ public class AddCoursesActivity extends AppCompatActivity
                 startDate = cursor.getString(cursor.getColumnIndex(DBOpenHelper.COURSE_START));
                 startEditor.setText(startDate);
 
+                // Splits the start date and creates the calendar date object
+                String[] d = startDate.split("/");
+                startCal = Calendar.getInstance();
+                startCal.set(Integer.parseInt(d[2]),
+                        (Integer.parseInt(d[0])-1), Integer.parseInt(d[1]));
+
                 savedEndDate = cursor.getString(cursor.getColumnIndex(DBOpenHelper.COURSE_END));
                 endDate = savedEndDate;
                 endEditor.setText(savedEndDate);
 
-                String courseStatus = cursor.getString(
-                        cursor.getColumnIndex(DBOpenHelper.COURSE_STATUS));
-                statusEditor.setText(courseStatus);
+                // Splits the end date and creates the calendar date object
+                d = endDate.split("/");
+                endCal = Calendar.getInstance();
+                endCal.set(Integer.parseInt(d[2]),
+                        Integer.parseInt(d[0])-1, Integer.parseInt(d[1]));
+
+                courseStatusID = cursor.getInt(cursor.getColumnIndex(DBOpenHelper.COURSE_STATUS));
+                courseStatus.setSelection(courseStatusID);
 
                 // This sets the spinner to the specific term
                 spinner.setSelection(adapter.getPosition(cursor.getInt(
                         cursor.getColumnIndex(DBOpenHelper.COURSE_TERM_ID))));
 
+                imagePath = cursor.getString(
+                        cursor.getColumnIndex(DBOpenHelper.COURSE_PICTURE));
+                if(imagePath != null) setImage();
+
                 // Closing the resource
                 cursor.close();
             }
         }
+    }
+    /**
+     * Opens the camera if the user grants permission to access it.
+     * @param requestCode the request code for permissions
+     * @param permissions the permissions
+     * @param grantResults results of the permissions
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == CAMERA_REQUEST_CODE){
+            // Checks to see if it is a response to the camera permissions request
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                // Opens the camera if permission is granted
+                openCamera();
+            }
+            else {
+                // Display asks user to grant access
+                Toast.makeText(this, "Please allow the camera", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    /**
+     * Helper function that opens the camera using intent.
+     */
+    private void openCamera() {
+        // New intent to open capture image
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        File imageFile = null;
+        try {
+            // Tries to create an image file
+            imageFile = createImageFile();
+        }
+        catch (IOException e){
+            // Something happened in IO
+            Toast.makeText(this, "Couldn't create file", Toast.LENGTH_SHORT).show();
+        }
+
+        if (imageFile != null){
+            // If the image was created save to that location
+            Uri imageURI = FileProvider.getUriForFile(this,
+                    "com.example.android.fileprovider", imageFile);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageURI);
+            startActivityForResult(intent, CAMERA_REQUEST_CODE);
+        }
+    }
+
+    /**
+     * Creates the file with where to store and how to name
+     * @return returns the image file
+     * @throws IOException File can throw IO error
+     */
+    private File createImageFile() throws IOException{
+        // Create a timestamp to add to the custom image name
+        @SuppressLint("SimpleDateFormat") String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String namePref = "image_courses" + timeStamp;
+
+        //Create the file with preset name and storage location
+        File storeDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File imageFile = new File(storeDir, namePref);
+
+        // sets where to find the image for later use
+        imagePath = imageFile.getAbsolutePath();
+        return imageFile;
+    }
+
+    /**
+     * When the camera closes and the image is captured, set it to display in the ImageView
+     * @param requestCode request code of the camera
+     * @param resultCode whether the user hit cancel or ok
+     * @param data would contain a thumbnail but picture was stored at different location
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK){
+            // Sets the image
+            setImage();
+        }
+    }
+
+    /**
+     * Helper function that sets the image into the ImageView.
+     */
+    private void setImage() {
+        // Creates the bitmap options
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        // Scales down the size to save memory when displaying
+        options.inSampleSize = 4;
+
+        // Decode the bitmap using the set options
+        Bitmap imageBitmap;
+        imageBitmap = BitmapFactory.decodeFile(imagePath, options);
+
+        // Rotates the image depending on how it was saved
+        imageBitmap = rotateImage(imageBitmap);
+        iv.setImageBitmap(imageBitmap);
+    }
+
+    /**
+     * Rotates the image according to the Exif of the image.
+     * @param imageBitmap the image to rotate
+     * @return returns the rotated image
+     */
+    private Bitmap rotateImage(Bitmap imageBitmap) {
+        // New ExifInterface with the orientation properties
+        ExifInterface ei;
+        Bitmap returnBitmap = null;
+        try {
+            ei = new ExifInterface(imagePath);
+            // Gets the orientation of how the image was taken
+            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_UNDEFINED);
+            // Depending on how it was taken, rotates the image to match the original
+            switch (orientation){
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    returnBitmap = rotate(imageBitmap, 90);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    returnBitmap = rotate(imageBitmap, 180);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    returnBitmap = rotate(imageBitmap, 270);
+                    break;
+                default:
+                    returnBitmap = rotate(imageBitmap, 0);
+            }
+        }catch (IOException e){
+            // Issue creating ei
+            Toast.makeText(this, "IO error!", Toast.LENGTH_SHORT).show();
+        }
+        return returnBitmap;
+    }
+
+    /**
+     * Rotates the image in degrees.
+     * @param in inputted image
+     * @param degree the degrees to rotate
+     * @return returns the rotated image
+     */
+    private Bitmap rotate(Bitmap in, int degree) {
+        // Creates a new matrix and applies the rotated matrix to the image
+        Matrix mtx = new Matrix();
+        mtx.postRotate(degree);
+        return Bitmap.createBitmap(in, 0, 0, in.getWidth(), in.getHeight(), mtx, true);
     }
 
     /**
@@ -297,24 +525,33 @@ public class AddCoursesActivity extends AppCompatActivity
      */
     private void insertCourse() {
         if(validate()) {
-            ContentValues cv = getValues();
-            getContentResolver().insert(ScheduleProvider.CONTENT_COURSES_URI, cv);
-            updateAlarms();
-            finish();
+            if(dateOkay()) {
+                ContentValues cv = getValues();
+                getContentResolver().insert(ScheduleProvider.CONTENT_COURSES_URI, cv);
+                updateAlarms();
+                finish();
+            } else {
+                Toast.makeText(this, "End date must be after start date",
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
-
 
     /**
      * Helper function that updates the selection from the screen using the set ContentResolver.
      */
     private void updateCourse() {
         if(validate()) {
-            ContentValues cv = getValues();
-            getContentResolver().update(ScheduleProvider.CONTENT_COURSES_URI, cv, filter, null);
-            // Only updates the alarm if the end dates are different
-            if (!savedEndDate.equals(endDate)) updateAlarms();
-            finish();
+            if(dateOkay()) {
+                ContentValues cv = getValues();
+                getContentResolver().update(ScheduleProvider.CONTENT_COURSES_URI, cv, filter, null);
+                // Only updates the alarm if the end dates are different
+                if (!savedEndDate.equals(endDate)) updateAlarms();
+                finish();
+            } else {
+                Toast.makeText(this, "End date must be after start date",
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -322,9 +559,31 @@ public class AddCoursesActivity extends AppCompatActivity
      * Helper function that deletes the selection from the screen using the set ContentResolver.
      */
     private void deleteCourse() {
-        getContentResolver().delete(ScheduleProvider.CONTENT_COURSES_URI, filter, null);
-        updateAlarms();
-        finish();
+        // Creates a new listener for dialog interfaces.
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener(){
+            /**
+             * Anonymous class implementation of what to do when the user OKs the delete.
+             * @param dialog the dialog interface
+             * @param which which button is pressed
+             */
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Deletes everything if it is confirmed
+                if(which == DialogInterface.BUTTON_POSITIVE){
+                    getContentResolver().delete(ScheduleProvider.CONTENT_COURSES_URI, filter, null);
+                    getContentResolver().delete(ScheduleProvider.CONTENT_MENTORS_URI, null, null);
+                    getContentResolver().delete(ScheduleProvider.CONTENT_ASSESSMENTS_URI,
+                            null, null);
+                    updateAlarms();
+                    finish();
+                }
+            }
+        };
+        // The pop up dialogue verifying
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Warning: This will reset all assessments, and mentors as well.")
+                .setPositiveButton(getString(android.R.string.yes), dialogClickListener)
+                .setNegativeButton(getString(android.R.string.cancel), dialogClickListener).show();
     }
 
     /**
@@ -339,7 +598,10 @@ public class AddCoursesActivity extends AppCompatActivity
         cv.put(DBOpenHelper.COURSE_TERM_ID, Integer.parseInt(terms.getSelectedItem().toString()));
         cv.put(DBOpenHelper.COURSE_START, startDate);
         cv.put(DBOpenHelper.COURSE_END, endDate);
-        cv.put(DBOpenHelper.COURSE_STATUS, statusEditor.getText().toString());
+        cv.put(DBOpenHelper.COURSE_STATUS, courseStatus.getSelectedItemPosition());
+        if(imagePath != null && imagePath.length() != 0) {
+            cv.put(DBOpenHelper.COURSE_PICTURE, imagePath);
+        }
         return cv;
     }
 
@@ -389,6 +651,14 @@ public class AddCoursesActivity extends AppCompatActivity
         courseNameEditor.setBackground(editTextBackground);
         startEditor.setBackground(editTextBackground);
         endEditor.setBackground(editTextBackground);
+    }
+
+    /**
+     * Helper function that returns true if end date is after start date.
+     * @return if end is after start
+     */
+    private boolean dateOkay() {
+        return endCal.after(startCal);
     }
 
     /**
@@ -492,8 +762,10 @@ public class AddCoursesActivity extends AppCompatActivity
         String date = sdf.format(d.getTime());
         // Sets the start or end date appropriately
         if (start) {
+            startCal = d;
             startDate = date;
         } else {
+            endCal = d;
             endDate = date;
         }
         // Displays the date on the textView

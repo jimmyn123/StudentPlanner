@@ -1,13 +1,15 @@
 /**
  * The Activity for adding and displaying the details of an assessment to the DB
  * @author Jimmy Nguyen
- * @version 2/21/2017
+ * @version 3/5/2017
  */
 package com.example.studentplanner.studentplanner;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.TaskStackBuilder;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -24,28 +26,36 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.FileProvider;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class AddAssessmentsActivity extends AppCompatActivity {
 
     // sets fields that will be used in multiple methods
     private static final int CAMERA_REQUEST_CODE = 777;
-    EditText assessmentTypeEditor, assessmentNotesEditor;
-    ImageView iv;
-    String action, filter, assessmentName, assessmentNotes, imagePath;
+    private EditText assessmentNotesEditor;
+    private ImageView iv;
+    private String action, filter, assessmentNotes, imagePath;
+    private int assessmentCourseID, assessmentTypeID;
+    private Spinner courseName, assessmentType;
+    private ArrayAdapter<String> adapterCourse, adapterType;
 
     /**
      * Shows the add form if it is adding a new entry.
@@ -81,9 +91,78 @@ public class AddAssessmentsActivity extends AppCompatActivity {
         setTitle("Add and save your assessments");
 
         // Finds all of the views and assigns it to a variable for easier access
-        assessmentTypeEditor = (EditText) findViewById(R.id.assessmentType);
         assessmentNotesEditor = (EditText) findViewById(R.id.notesText);
         iv = (ImageView) findViewById(R.id.imageView);
+
+        // Get the contents of the courses table and put it in a cursor
+        Cursor cursor = getContentResolver().query(ScheduleProvider.CONTENT_COURSES_URI,
+                null, null, null, null);
+        // Create and populate an array of course names using the cursor
+        List<String> courseNames = new ArrayList<>();
+        if(cursor != null){
+            if(cursor.moveToFirst()) {
+                do {
+                    courseNames.add(cursor.getString(
+                            cursor.getColumnIndex(DBOpenHelper.COURSE_NAME)));
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+        }
+
+        // If there are no courses, prompt the user to add a courses
+        if(courseNames.size() == 0) {
+            // Creates a new listener for dialog interfaces.
+            DialogInterface.OnClickListener dialogClickListener =
+                    new DialogInterface.OnClickListener(){
+                        /**
+                         * Anonymous class implementation of what to do when the user OKs the delete.
+                         * @param dialog the dialog interface
+                         * @param which which button is pressed
+                         */
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Goes to the AddCoursesActivity if the user wants to add
+                            if(which == DialogInterface.BUTTON_POSITIVE){
+                                Intent intent = new Intent(AddAssessmentsActivity.this, AddCoursesActivity.class);
+                                // Creates the backstack and sets parent to Terms activity
+                                TaskStackBuilder stackBuilder =
+                                        TaskStackBuilder.create(AddAssessmentsActivity.this);
+                                stackBuilder.addNextIntentWithParentStack(intent);
+                                stackBuilder.startActivities();
+                            }
+                            else {
+                                // Goes back to Assessments activity if the user doesn't want to add term
+                                finish();
+                            }
+                        }
+                    };
+            // The pop up dialogue verifying
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("No courses added, add course?")
+                    .setPositiveButton(getString(android.R.string.yes), dialogClickListener)
+                    .setNegativeButton(getString(android.R.string.cancel), dialogClickListener)
+                    .show();
+        }
+
+        // Create an adapterCourse for the data and place it in a pre-defined layout
+        adapterCourse = new ArrayAdapter<>(this, R.layout.spinner_item, courseNames);
+        adapterCourse.setDropDownViewResource(R.layout.spinner_item);
+
+        // Finds the courseName view and sets the adapterCourse to display the data
+        courseName = (Spinner) findViewById(R.id.courseName);
+        courseName.setAdapter(adapterCourse);
+
+        // Create and populate an array of course types
+        List<String> courseTypes = new ArrayList<>();
+        courseTypes.add("Objective Assessment");
+        courseTypes.add("Performance Assessment");
+
+        // Create an adapterCourse for the data and place it in a pre-defined layout
+        adapterType = new ArrayAdapter<>(this, R.layout.spinner_item, courseTypes);
+
+        // Finds the assessment type view and sets the adapterCourse to display the data
+        assessmentType = (Spinner) findViewById(R.id.assessmentType);
+        assessmentType.setAdapter(adapterType);
 
         // Finds the button that adds a picture
         Button addPicture = (Button) findViewById(R.id.button_Photo_Note);
@@ -134,23 +213,27 @@ public class AddAssessmentsActivity extends AppCompatActivity {
 
             // The filter is which row of data to load from
             filter = DBOpenHelper.ASSESSMENT_ID + "=" + uri.getLastPathSegment();
-            Cursor cursor = getContentResolver().query(uri, DBOpenHelper.ASSESSMENT_COLUMNS,
+            cursor = getContentResolver().query(uri, DBOpenHelper.ASSESSMENT_COLUMNS,
                     filter, null, null);
             // Make sure there is data
             if (cursor != null) {
                 // Move to the beginning and load all of the data from the DB to the views
                 cursor.moveToFirst();
 
-                assessmentName = cursor.getString(
-                        cursor.getColumnIndex(DBOpenHelper.ASSESSMENT_NAME));
-                assessmentTypeEditor.setText(assessmentName);
+                assessmentCourseID = cursor.getInt(
+                        cursor.getColumnIndex(DBOpenHelper.ASSESSMENT_COURSE_ID));
+                courseName.setSelection(assessmentCourseID);
+                assessmentTypeID = cursor.getInt(
+                        cursor.getColumnIndex(DBOpenHelper.ASSESSMENT_TYPE));
+                assessmentType.setSelection(assessmentTypeID);
                 assessmentNotes = cursor.getString(
                         cursor.getColumnIndex(DBOpenHelper.ASSESSMENT_NOTES));
                 assessmentNotesEditor.setText(assessmentNotes);
 
                 imagePath = cursor.getString(
                         cursor.getColumnIndex(DBOpenHelper.ASSESSMENT_PICTURE));
-                setImage();
+
+                if(imagePath != null) setImage();
 
                 // Closing the resource
                 cursor.close();
@@ -348,7 +431,7 @@ public class AddAssessmentsActivity extends AppCompatActivity {
      */
     private void finishEditing() {
         // Gets the course from the editor
-        String fromEditor = assessmentTypeEditor.getText().toString();
+        String fromEditor = courseName.getSelectedItem().toString();
         switch(action){
             case Intent.ACTION_INSERT:
                 // If the action is insert and the assessment isn't blank, add assessment
@@ -400,7 +483,9 @@ public class AddAssessmentsActivity extends AppCompatActivity {
     private ContentValues getContentValues() {
         ContentValues cv = new ContentValues();
         // Puts in the values in the ContentValues object
-        cv.put(DBOpenHelper.ASSESSMENT_NAME, assessmentTypeEditor.getText().toString());
+        cv.put(DBOpenHelper.ASSESSMENT_COURSE, courseName.getSelectedItem().toString());
+        cv.put(DBOpenHelper.ASSESSMENT_COURSE_ID, courseName.getSelectedItemPosition());
+        cv.put(DBOpenHelper.ASSESSMENT_TYPE, assessmentType.getSelectedItemPosition());
         cv.put(DBOpenHelper.ASSESSMENT_NOTES, assessmentNotesEditor.getText().toString());
         if(imagePath != null && imagePath.length() != 0) {
             cv.put(DBOpenHelper.ASSESSMENT_PICTURE, imagePath);

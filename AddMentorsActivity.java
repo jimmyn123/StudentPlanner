@@ -1,17 +1,20 @@
 /**
  * The Activity for adding and displaying the details of a mentor to the DB
  * @author Jimmy Nguyen
- * @version 3/2/2017
+ * @version 3/5/2017
  */
 package com.example.studentplanner.studentplanner;
 
+import android.app.TaskStackBuilder;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -49,9 +52,10 @@ public class AddMentorsActivity extends AppCompatActivity {
     private final String PHONE_PATTERN = "[0-9]{10}";
 
     // Regex for email pattern
-    private final String EMAIL_PATTERN =
-            "[_A-Za-z-\\+]+(\\.[_A-Za-z0-9-]+)*@"
-                    + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+    private final String EMAIL_PATTERN = "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$";
+
+/*            "^[_A-Za-z-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+                    + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";*/
 
     /**
      * Shows the add form if it is adding a new entry.
@@ -91,6 +95,9 @@ public class AddMentorsActivity extends AppCompatActivity {
         coursesEditor = (TextView) findViewById(R.id.coursesMentored);
         addCourses = (Button) findViewById(R.id.button_Add_Courses);
 
+        // Instantiate courses string
+        coursesMentored = "";
+
         // Gets the original background
         editTextBackground = nameEditor.getBackground();
 
@@ -107,6 +114,41 @@ public class AddMentorsActivity extends AppCompatActivity {
                 } while (cursor.moveToNext());
             }
             cursor.close();
+        }
+
+        // If there are no courses, prompt the user to add a courses
+        if(courseNames.size() == 0) {
+            // Creates a new listener for dialog interfaces.
+            DialogInterface.OnClickListener dialogClickListener =
+                    new DialogInterface.OnClickListener(){
+                        /**
+                         * Anonymous class implementation of what to do when the user OKs the delete.
+                         * @param dialog the dialog interface
+                         * @param which which button is pressed
+                         */
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Goes to the AddCoursesActivity if the user wants to add
+                            if(which == DialogInterface.BUTTON_POSITIVE){
+                                Intent intent = new Intent(AddMentorsActivity.this, AddCoursesActivity.class);
+                                // Creates the backstack and sets parent to Terms activity
+                                TaskStackBuilder stackBuilder =
+                                        TaskStackBuilder.create(AddMentorsActivity.this);
+                                stackBuilder.addNextIntentWithParentStack(intent);
+                                stackBuilder.startActivities();
+                            }
+                            else {
+                                // Goes back to Mentors activity if the user doesn't want to add term
+                                finish();
+                            }
+                        }
+                    };
+            // The pop up dialogue verifying
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("No courses added, add course?")
+                    .setPositiveButton(getString(android.R.string.yes), dialogClickListener)
+                    .setNegativeButton(getString(android.R.string.cancel), dialogClickListener)
+                    .show();
         }
 
         // Create an adapter for the data and place it in a pre-defined layout
@@ -205,6 +247,9 @@ public class AddMentorsActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // Sets the onclick for the button to email the mentor
+        emailButton();
     }
 
     /**
@@ -239,6 +284,35 @@ public class AddMentorsActivity extends AppCompatActivity {
             addCourses.setText(R.string.reset_courses_mentoring);
             resetButton = true;
         }
+    }
+
+    /**
+     * Helper function that emails the mentor
+     */
+    private void emailButton() {
+        Button email = (Button) findViewById(R.id.emailLabel);
+        email.setOnClickListener(new View.OnClickListener() {
+            /**
+             * Anonymous class that opens the package manager to handle emailing.
+             * @param v the view
+             */
+            @Override
+            public void onClick(View v) {
+                if(validate()) {
+                    // Creates an array of emails
+                    String[] emails = {emailEditor.getText().toString()};
+                    // Create the intent to email
+                    Intent intent = new Intent(Intent.ACTION_SENDTO);
+                    intent.setData(Uri.parse("mailto:"));
+                    intent.putExtra(Intent.EXTRA_EMAIL, emails);
+
+                    // If there is a manager to handle emails then start activity
+                    if(intent.resolveActivity(getPackageManager()) != null){
+                        startActivity(intent);
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -289,7 +363,11 @@ public class AddMentorsActivity extends AppCompatActivity {
         switch(action){
             // If the action is insert and the mentor isn't blank, add mentor
             case Intent.ACTION_INSERT:
-                if(fromEditor.length() != 0) insertMentor();
+                if(fromEditor.length() != 0){
+                    insertMentor();
+                } else {
+                    finish();
+                }
                 break;
             case Intent.ACTION_EDIT:
                 // If the action is edit and the mentor is blank, delete, else update
@@ -386,7 +464,7 @@ public class AddMentorsActivity extends AppCompatActivity {
         }
 
         // Compiles the email pattern
-        pattern = Pattern.compile(EMAIL_PATTERN);
+        pattern = Pattern.compile(EMAIL_PATTERN, Pattern.CASE_INSENSITIVE);
         matcher = pattern.matcher(emailEditor.getText().toString());
 
         // Checks to see if email matches the pattern
