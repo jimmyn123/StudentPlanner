@@ -1,7 +1,7 @@
 /**
  * The Activity for adding and displaying the details of a course to the DB
  * @author Jimmy Nguyen
- * @version 3/5/2017
+ * @version 3/6/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -61,11 +61,11 @@ public class AddCoursesActivity extends AppCompatActivity
 
     // sets fields that will be used in multiple methods
     private static final int CAMERA_REQUEST_CODE = 777;
-    private EditText courseNameEditor, startEditor, endEditor, dateDisplay;
-    private String action, filter, startDate, endDate, savedEndDate, imagePath;
+    private EditText courseNameEditor, startEditor, endEditor, dateDisplay, notesEditor;
+    private String action, courseFilter, startDate, endDate, savedEndDate, imagePath;
     private Calendar startCal, endCal;
     private int courseStatusID;
-    private Spinner courseStatus;
+    private Spinner spinner, courseStatus;
     private ArrayAdapter<String> adapterStatus;
     private ImageView iv;
     private boolean start;
@@ -91,7 +91,7 @@ public class AddCoursesActivity extends AppCompatActivity
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             /**
-             * Anonymouse class implementation of what happens when you click the FAB
+             * Anonymous class implementation of what happens when you click the FAB
              * @param view current view
              */
             @Override
@@ -110,6 +110,7 @@ public class AddCoursesActivity extends AppCompatActivity
         courseNameEditor = (EditText) findViewById(R.id.courseName);
         startEditor = (EditText) findViewById(R.id.startDateCourses);
         endEditor = (EditText) findViewById(R.id.endDateCourses);
+        notesEditor = (EditText) findViewById(R.id.notesText);
         iv = (ImageView) findViewById(R.id.imageView);
 
         // Gets the editText default background
@@ -153,6 +154,31 @@ public class AddCoursesActivity extends AppCompatActivity
                 else {
                     // All other SDKs already have permission when the app installs
                     openCamera();
+                }
+            }
+        });
+
+        // Finds the button that emails the notes
+        Button email = (Button) findViewById(R.id.button_email);
+        email.setOnClickListener(new View.OnClickListener() {
+            /**
+             * Anonymous class for the button that emails the course notes
+             * @param v the view
+             */
+            @Override
+            public void onClick(View v) {
+                // Create the intent to email
+                Intent intent = new Intent(Intent.ACTION_SENDTO);
+                String subject = "COURSE NOTES - " + courseNameEditor.getText().toString();
+
+                // Adds subject and text
+                intent.setData(Uri.parse("mailto:"));
+                intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+                intent.putExtra(Intent.EXTRA_TEXT, notesEditor.getText().toString());
+
+                // If there is a manager to handle emails then start activity
+                if(intent.resolveActivity(getPackageManager()) != null){
+                    startActivity(intent);
                 }
             }
         });
@@ -219,7 +245,7 @@ public class AddCoursesActivity extends AppCompatActivity
                     // Goes to the AddTermsActivity if the user wants to add
                     if(which == DialogInterface.BUTTON_POSITIVE){
                         Intent intent = new Intent(AddCoursesActivity.this, AddTermsActivity.class);
-                        // Creates the backstack and sets parent to Terms activity
+                        // Creates the BackStack and sets parent to Terms activity
                         TaskStackBuilder stackBuilder =
                                 TaskStackBuilder.create(AddCoursesActivity.this);
                         stackBuilder.addNextIntentWithParentStack(intent);
@@ -245,7 +271,7 @@ public class AddCoursesActivity extends AppCompatActivity
         adapter.setDropDownViewResource(R.layout.spinner_item);
 
         // Finds the spinner view and sets the adapter to display the data
-        Spinner spinner = (Spinner) findViewById(R.id.spinnerTerms);
+        spinner = (Spinner) findViewById(R.id.spinnerTerms);
         spinner.setAdapter(adapter);
 
         // Gets the intent from the previous activity
@@ -261,10 +287,10 @@ public class AddCoursesActivity extends AppCompatActivity
             action = Intent.ACTION_EDIT;
             setTitle("Edit Course");
 
-            // The filter is which row of data to load from
-            filter = DBOpenHelper.COURSE_ID + "=" + uri.getLastPathSegment();
+            // The courseFilter is which row of data to load from
+            courseFilter = DBOpenHelper.COURSE_ID + "=" + uri.getLastPathSegment();
             cursor = getContentResolver().query(uri, DBOpenHelper.COURSES_COLUMNS,
-                    filter, null, null);
+                    courseFilter, null, null);
             // Make sure there is data
             if(cursor!=null) {
                 // Move to the beginning and load all of the data from the DB to the views
@@ -295,6 +321,9 @@ public class AddCoursesActivity extends AppCompatActivity
 
                 courseStatusID = cursor.getInt(cursor.getColumnIndex(DBOpenHelper.COURSE_STATUS));
                 courseStatus.setSelection(courseStatusID);
+
+                String notes = cursor.getString(cursor.getColumnIndex(DBOpenHelper.COURSE_NOTES));
+                notesEditor.setText(notes);
 
                 // This sets the spinner to the specific term
                 spinner.setSelection(adapter.getPosition(cursor.getInt(
@@ -528,6 +557,10 @@ public class AddCoursesActivity extends AppCompatActivity
             if(dateOkay()) {
                 ContentValues cv = getValues();
                 getContentResolver().insert(ScheduleProvider.CONTENT_COURSES_URI, cv);
+
+                // Updates terms table
+                updateTerms(1);
+
                 updateAlarms();
                 finish();
             } else {
@@ -538,13 +571,46 @@ public class AddCoursesActivity extends AppCompatActivity
     }
 
     /**
+     * Helper method that updates how many courses are using that term.
+     * @param in how much to add/subtract
+     */
+    private void updateTerms(int in) {
+        // New contentValue to input
+        ContentValues cv;
+
+        // The courseFilter to find if the term already has courses
+        String filter = DBOpenHelper.TERM_NUMBER + " = " +
+                spinner.getSelectedItem().toString();
+        Cursor cursor = getContentResolver().query(ScheduleProvider.CONTENT_TERMS_URI,
+                DBOpenHelper.TERMS_COLUMNS, filter, null, null);
+
+        // Only if cursor exists
+        if(cursor != null) {
+            cursor.moveToFirst();
+
+            // Gets the count
+            int count = cursor.getInt(cursor.getColumnIndex(DBOpenHelper.TERM_HAS_COURSE)) + in;
+            cursor.close();
+
+            // Creates new CV and adds the value
+            cv = new ContentValues();
+            cv.put(DBOpenHelper.TERM_HAS_COURSE, count);
+
+            // Updates the terms table
+            getContentResolver().update(ScheduleProvider.CONTENT_TERMS_URI, cv, filter, null);
+        }
+    }
+
+    /**
      * Helper function that updates the selection from the screen using the set ContentResolver.
      */
     private void updateCourse() {
         if(validate()) {
             if(dateOkay()) {
                 ContentValues cv = getValues();
-                getContentResolver().update(ScheduleProvider.CONTENT_COURSES_URI, cv, filter, null);
+                getContentResolver().update(ScheduleProvider.CONTENT_COURSES_URI, cv,
+                        courseFilter, null);
+
                 // Only updates the alarm if the end dates are different
                 if (!savedEndDate.equals(endDate)) updateAlarms();
                 finish();
@@ -570,7 +636,9 @@ public class AddCoursesActivity extends AppCompatActivity
             public void onClick(DialogInterface dialog, int which) {
                 // Deletes everything if it is confirmed
                 if(which == DialogInterface.BUTTON_POSITIVE){
-                    getContentResolver().delete(ScheduleProvider.CONTENT_COURSES_URI, filter, null);
+                    updateTerms(-1);
+                    getContentResolver().delete(ScheduleProvider.CONTENT_COURSES_URI,
+                            courseFilter, null);
                     getContentResolver().delete(ScheduleProvider.CONTENT_MENTORS_URI, null, null);
                     getContentResolver().delete(ScheduleProvider.CONTENT_ASSESSMENTS_URI,
                             null, null);
@@ -581,7 +649,7 @@ public class AddCoursesActivity extends AppCompatActivity
         };
         // The pop up dialogue verifying
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Warning: This will reset all assessments, and mentors as well.")
+        builder.setMessage("Warning: This will delete all assessments, and mentors as well.")
                 .setPositiveButton(getString(android.R.string.yes), dialogClickListener)
                 .setNegativeButton(getString(android.R.string.cancel), dialogClickListener).show();
     }
@@ -599,6 +667,7 @@ public class AddCoursesActivity extends AppCompatActivity
         cv.put(DBOpenHelper.COURSE_START, startDate);
         cv.put(DBOpenHelper.COURSE_END, endDate);
         cv.put(DBOpenHelper.COURSE_STATUS, courseStatus.getSelectedItemPosition());
+        cv.put(DBOpenHelper.COURSE_NOTES, notesEditor.getText().toString());
         if(imagePath != null && imagePath.length() != 0) {
             cv.put(DBOpenHelper.COURSE_PICTURE, imagePath);
         }

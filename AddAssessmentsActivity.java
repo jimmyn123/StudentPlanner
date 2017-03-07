@@ -1,7 +1,7 @@
 /**
  * The Activity for adding and displaying the details of an assessment to the DB
  * @author Jimmy Nguyen
- * @version 3/5/2017
+ * @version 3/6/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -124,7 +124,7 @@ public class AddAssessmentsActivity extends AppCompatActivity {
                             // Goes to the AddCoursesActivity if the user wants to add
                             if(which == DialogInterface.BUTTON_POSITIVE){
                                 Intent intent = new Intent(AddAssessmentsActivity.this, AddCoursesActivity.class);
-                                // Creates the backstack and sets parent to Terms activity
+                                // Creates the BackStack and sets parent to Terms activity
                                 TaskStackBuilder stackBuilder =
                                         TaskStackBuilder.create(AddAssessmentsActivity.this);
                                 stackBuilder.addNextIntentWithParentStack(intent);

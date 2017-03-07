@@ -2,11 +2,12 @@
  * Course activity. Displays the added courses and loads it from the database.
  *
  * @author Jimmy Nguyen
- * @version 2/21/2017
+ * @version 3/6/2017
  */
 
 package com.example.studentplanner.studentplanner;
 
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -147,6 +148,7 @@ public class CoursesActivity extends AppCompatActivity
             public void onClick(DialogInterface dialog, int which) {
                 // Deletes everything if it is confirmed
                 if(which == DialogInterface.BUTTON_POSITIVE){
+                    updateTerms();
                     getContentResolver().delete(ScheduleProvider.CONTENT_COURSES_URI, null, null);
                     getContentResolver().delete(ScheduleProvider.CONTENT_MENTORS_URI, null, null);
                     getContentResolver().delete(ScheduleProvider.CONTENT_ASSESSMENTS_URI,
@@ -159,6 +161,18 @@ public class CoursesActivity extends AppCompatActivity
         builder.setMessage("Warning: This will delete all assessments, and mentors as well.")
                 .setPositiveButton(getString(android.R.string.yes), dialogClickListener)
                 .setNegativeButton(getString(android.R.string.cancel), dialogClickListener).show();
+    }
+
+    /**
+     * Helper method that updates how many courses are using that term.
+     */
+    private void updateTerms() {
+        // Creates new CV and adds the value
+        ContentValues cv = new ContentValues();
+        cv.put(DBOpenHelper.TERM_HAS_COURSE, 0);
+
+        // Updates the terms table
+        getContentResolver().update(ScheduleProvider.CONTENT_TERMS_URI, cv, null, null);
     }
 
     /**

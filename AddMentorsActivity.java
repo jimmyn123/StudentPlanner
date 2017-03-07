@@ -1,7 +1,7 @@
 /**
  * The Activity for adding and displaying the details of a mentor to the DB
  * @author Jimmy Nguyen
- * @version 3/5/2017
+ * @version 3/6/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 public class AddMentorsActivity extends AppCompatActivity {
 
     // sets fields that will be used in multiple methods
-    private String action, termFilter, coursesMentored;
+    private String action, mentorFilter, coursesMentored;
     private EditText nameEditor, numberEditor, emailEditor;
     private TextView coursesEditor;
     private Button addCourses;
@@ -175,9 +175,9 @@ public class AddMentorsActivity extends AppCompatActivity {
             setTitle("Edit Mentor");
 
             // The filter is which row of data to load from
-            termFilter = DBOpenHelper.MENTOR_ID + "=" + uri.getLastPathSegment();
+            mentorFilter = DBOpenHelper.MENTOR_ID + "=" + uri.getLastPathSegment();
             cursor = getContentResolver().query(uri, DBOpenHelper.MENTOR_COLUMNS,
-                    termFilter, null, null);
+                    mentorFilter, null, null);
             // Make sure there is data
             if(cursor != null) {
                 // Move to the beginning and load all of the data from the DB to the views
@@ -398,7 +398,7 @@ public class AddMentorsActivity extends AppCompatActivity {
     private void updateMentor() {
         if(validate()) {
             ContentValues cv = getValues();
-            getContentResolver().update(ScheduleProvider.CONTENT_MENTORS_URI, cv, termFilter, null);
+            getContentResolver().update(ScheduleProvider.CONTENT_MENTORS_URI, cv, mentorFilter, null);
             finish();
         }
     }
@@ -407,7 +407,7 @@ public class AddMentorsActivity extends AppCompatActivity {
      * Helper function that deletes the selection from the screen using the set ContentResolver.
      */
     private void deleteMentor() {
-        getContentResolver().delete(ScheduleProvider.CONTENT_MENTORS_URI, termFilter, null);
+        getContentResolver().delete(ScheduleProvider.CONTENT_MENTORS_URI, mentorFilter, null);
         finish();
     }
 

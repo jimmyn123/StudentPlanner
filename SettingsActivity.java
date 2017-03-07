@@ -1,8 +1,9 @@
 /**
  * The settings activity class. It provides the option to send notification messages for
  * upcoming course due dates.
+ *
  * @author Jimmy Nguyen
- * @version 2/24/2017
+ * @version 3/6/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -18,10 +19,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.widget.SimpleCursorAdapter;
-import android.widget.Toast;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -41,7 +39,7 @@ public class SettingsActivity extends AppCompatActivity {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             /**
-             * Anonymous class that goes to the previous activity in the backstack.
+             * Anonymous class that goes to the previous activity in the BackStack.
              * @param view current view
              */
             @Override
@@ -51,7 +49,7 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         // Sets the back button on the ActionBar
-        if(getSupportActionBar() != null ) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if (getSupportActionBar() != null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         // Sets the title of the activity
         setTitle("Settings");
@@ -69,7 +67,7 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onStop() {
         // Gets the SharedPreferences
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean notifications = sp.getBoolean("notifications",true);
+        boolean notifications = sp.getBoolean("notifications", true);
 
         // Queries the database for the courses and end dates
         Cursor cursor = getContentResolver().query(
@@ -91,7 +89,7 @@ public class SettingsActivity extends AppCompatActivity {
                             cursor.getColumnIndex(DBOpenHelper.COURSE_END)).split("/");
                     // Sets the date of the reminder
                     alarm.set(Integer.parseInt(date[2]),
-                            (Integer.parseInt(date[0])-1), Integer.parseInt(date[1]));
+                            (Integer.parseInt(date[0]) - 1), Integer.parseInt(date[1]));
 
                     // New intent and to get a PendingIntent
                     Intent intent = new Intent(this, AlarmReceiver.class);
@@ -107,7 +105,7 @@ public class SettingsActivity extends AppCompatActivity {
                     AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
                     am.cancel(pi);
                     // Sets alarm if the date has not passed yet.
-                    if(alarm.after(today)) {
+                    if (alarm.after(today)) {
                         // Only sets a new alarm if notifications is set to true in preferences
                         alarm.add(Calendar.DAY_OF_MONTH, -1);
                         if (notifications) am.set(AlarmManager.RTC, alarm.getTimeInMillis(), pi);

@@ -1,7 +1,7 @@
 /**
- * The custom content provider for the scheduleplanner app.
+ * The custom content provider for the Schedule Planner app.
  * @author Jimmy nguyen
- * @version 3/5/2017
+ * @version 3/6/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -50,7 +50,7 @@ public class ScheduleProvider extends ContentProvider {
     public static final String CONTENT_MENTOR_TYPE = "mentor";
     public static final String CONTENT_ASSESSMENT_TYPE = "assessment";
 
-    // a new urimatcher
+    // a new UriMatcher
     private static final UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
     // matching the URI case to the constants above
@@ -70,7 +70,7 @@ public class ScheduleProvider extends ContentProvider {
 
     /**
      * Creates and gets the database.
-     * @return doesn't matter what to return
+     * @return Does not matter what to return
      */
     @Override
     public boolean onCreate() {

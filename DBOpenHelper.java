@@ -1,9 +1,8 @@
 /**
  * The helper class used to create and access the internal database.
  * @author Jimmy nguyen
- * @version 3/5/2017
+ * @version 3/6/2017
  */
-
 package com.example.studentplanner.studentplanner;
 
 import android.content.Context;
@@ -15,7 +14,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DBOpenHelper extends SQLiteOpenHelper {
     // Database name and version constants
     private static final String DATABASE_NAME = "schedule.db";
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 1;
 
     // Column names for the terms table
     public static final String TABLE_TERMS = "terms";
@@ -23,16 +22,18 @@ public class DBOpenHelper extends SQLiteOpenHelper {
     public static final String TERM_NUMBER = "termNumber";
     public static final String TERM_START = "termStart";
     public static final String TERM_END = "termEnd";
+    public static final String TERM_HAS_COURSE = "hasCourse";
     public static final String TERM_CREATED = "termCreated";
 
     // Array of all the columns in terms
     public static final String[] TERMS_COLUMNS = {TERM_ID, TERM_NUMBER, TERM_START,
-            TERM_END, TERM_CREATED};
+            TERM_END, TERM_HAS_COURSE, TERM_CREATED};
 
     // The sql statement to create the terms table
     private static final String TERMS_CREATE = "CREATE TABLE " + TABLE_TERMS +
             " (" + TERM_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-            TERM_NUMBER + " INTEGER, " + TERM_START + " TEXT, " + TERM_END + " TEXT, " +
+            TERM_NUMBER + " INTEGER, " + TERM_START + " TEXT, " +
+            TERM_END + " TEXT, " + TERM_HAS_COURSE + " INTEGER DEFAULT 0, " +
             TERM_CREATED + " TEXT default CURRENT_TIMESTAMP" + ")";
 
     // Column names for the courses table
@@ -43,20 +44,20 @@ public class DBOpenHelper extends SQLiteOpenHelper {
     public static final String COURSE_START = "courseStart";
     public static final String COURSE_END = "courseEnd";
     public static final String COURSE_STATUS = "courseStatus";
+    public static final String COURSE_NOTES = "courseNotes";
     public static final String COURSE_PICTURE = "coursePicture";
     public static final String COURSE_CREATED = "courseCreated";
 
     // Array of all the columns in terms
     static final String[] COURSES_COLUMNS = {COURSE_ID, COURSE_TERM_ID, COURSE_NAME,
-            COURSE_START, COURSE_END, COURSE_STATUS, COURSE_PICTURE, COURSE_CREATED};
+            COURSE_START, COURSE_END, COURSE_STATUS, COURSE_NOTES, COURSE_PICTURE, COURSE_CREATED};
 
     // The sql statement to create the courses table
     private static final String COURSES_CREATE = "CREATE TABLE " + TABLE_COURSES + " (" +
             COURSE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-            COURSE_TERM_ID + " INTEGER, " + COURSE_NAME + " TEXT, " +
-            COURSE_START + " TEXT, " + COURSE_END + " TEXT, " +
-            COURSE_STATUS + " INTEGER, " + COURSE_PICTURE + " TEXT, " +
-            COURSE_CREATED + " TEXT default CURRENT_TIMESTAMP" + ")";
+            COURSE_TERM_ID + " INTEGER, " + COURSE_NAME + " TEXT, " + COURSE_START + " TEXT, " +
+            COURSE_END + " TEXT, " + COURSE_NOTES + " TEXT, " + COURSE_STATUS + " INTEGER, " +
+            COURSE_PICTURE + " TEXT, " + COURSE_CREATED + " TEXT default CURRENT_TIMESTAMP" + ")";
 
     // Column names for the mentors table
     public static final String TABLE_MENTORS = "mentors";

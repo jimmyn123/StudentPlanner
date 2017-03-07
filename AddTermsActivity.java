@@ -1,7 +1,7 @@
 /**
  * The Activity for adding and displaying the details of a term to the DB
  * @author Jimmy Nguyen
- * @version 3/5/2017
+ * @version 3/6/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -35,7 +35,7 @@ public class AddTermsActivity extends AppCompatActivity
 
     // sets fields that will be used in multiple methods
     private EditText termEditor, startEditor, endEditor, dateDisplay;
-    private String action, termFilter, startDate, endDate;
+    private String action, termFilter, startDate, endDate, oldTerm;
     private Calendar startCal, endCal;
     private boolean start;
     private Drawable editTextBackground;
@@ -79,6 +79,9 @@ public class AddTermsActivity extends AppCompatActivity
         startEditor = (EditText) findViewById(R.id.startDateText);
         endEditor = (EditText) findViewById(R.id.endDateText);
 
+        // Set old term #
+        oldTerm = "";
+
         // Gets the editText default background
         editTextBackground = termEditor.getBackground();
 
@@ -105,7 +108,7 @@ public class AddTermsActivity extends AppCompatActivity
                 // Move to the beginning and load all of the data from the DB to the views
                 cursor.moveToFirst();
 
-                String oldTerm = cursor.getString(cursor.getColumnIndex(DBOpenHelper.TERM_NUMBER));
+                oldTerm = cursor.getString(cursor.getColumnIndex(DBOpenHelper.TERM_NUMBER));
                 termEditor.setText(oldTerm);
 
                 startDate = cursor.getString(cursor.getColumnIndex(DBOpenHelper.TERM_START));
@@ -246,20 +249,31 @@ public class AddTermsActivity extends AppCompatActivity
             public void onClick(DialogInterface dialog, int which) {
                 // Deletes everything if it is confirmed
                 if(which == DialogInterface.BUTTON_POSITIVE){
-                    getContentResolver().delete(ScheduleProvider.CONTENT_TERMS_URI,
-                            termFilter, null);
-                    getContentResolver().delete(ScheduleProvider.CONTENT_COURSES_URI, null, null);
-                    getContentResolver().delete(ScheduleProvider.CONTENT_MENTORS_URI, null, null);
-                    getContentResolver().delete(ScheduleProvider.CONTENT_ASSESSMENTS_URI,
-                            null, null);
-                    finish();
+                    Cursor c = getContentResolver().query(ScheduleProvider.CONTENT_TERMS_URI,
+                            DBOpenHelper.TERMS_COLUMNS, termFilter, null, null);
+
+                    // Only opens if c is not null
+                    if(c != null) {
+                        // Move to first line
+                        c.moveToFirst();
+
+                        int courses = c.getInt(c.getColumnIndex(DBOpenHelper.TERM_HAS_COURSE));
+                        c.close();
+                        if (courses == 0) {
+                            getContentResolver().delete(ScheduleProvider.CONTENT_TERMS_URI,
+                                    termFilter, null);
+                            finish();
+                        } else {
+                            Toast.makeText(AddTermsActivity.this, "There are still courses in this" +
+                                    " term, delete courses first.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 }
             }
         };
         // The pop up dialogue verifying
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Warning: This will reset all courses," +
-                " assessments, and mentors as well.")
+        builder.setMessage("Are you sure you want to delete this term?")
                 .setPositiveButton(getString(android.R.string.yes), dialogClickListener)
                 .setNegativeButton(getString(android.R.string.cancel), dialogClickListener).show();
     }
@@ -312,6 +326,21 @@ public class AddTermsActivity extends AppCompatActivity
             Toast.makeText(this,
                     "Invalid end date, please try again.", Toast.LENGTH_SHORT).show();
         }
+
+        // Gets a cursor with the chosen term #
+        Cursor c = getContentResolver().query(ScheduleProvider.CONTENT_TERMS_URI,
+                DBOpenHelper.TERMS_COLUMNS, DBOpenHelper.TERM_NUMBER + " = " +
+                        termEditor.getText().toString(), null, null);
+
+        // If a cursor is returned, that means that the term number already exists
+        if(!oldTerm.equals(termEditor.getText().toString()) && c != null && c.getCount() != 0){
+            matches = false;
+            Toast.makeText(this,
+                    "Duplicate term number, please try another.", Toast.LENGTH_SHORT).show();
+        }
+
+        // Close cursor
+        c.close();
 
         return matches;
     }

@@ -1,7 +1,7 @@
 /**
  *A cursor adapter for the student planner app. Inflates and binds to a custom view.
  * @author Jimmy Nguyen
- * @version 3/5/2017
+ * @version 3/6/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -21,7 +21,7 @@ public class ScheduleCursorAdapter extends CursorAdapter {
     private static final int coursesActivity = 2;
     private static final int mentorsActivity = 3;
     private static final int assessmentsActivity = 4;
-    private int activity;
+    private final int activity;
 
     // Array of types of assessments
     private final String[] assessments = {"Objective Assessment", "Performance Assessment"};
