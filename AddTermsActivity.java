@@ -338,7 +338,7 @@ public class AddTermsActivity extends AppCompatActivity
             Toast.makeText(this,
                     "Duplicate term number, please try another.", Toast.LENGTH_SHORT).show();
         }
-
+        
         // Close cursor
         c.close();
 
