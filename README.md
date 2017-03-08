@@ -3,6 +3,11 @@ An planner application created for android.
 This was made to demonstrate the ability to create an android app for the phone.
 This application is not yet finished and will be frequently updated.
 
+1.7 Features
+- Updated Assessments with goal dates
+- Updated AlarmReceiver to notify depending on if course or assessment is due
+- New function to build notifications
+
 1.6 Features:
 - Updates to validation
 - Updates to usability

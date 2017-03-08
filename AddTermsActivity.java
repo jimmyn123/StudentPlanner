@@ -1,7 +1,7 @@
 /**
  * The Activity for adding and displaying the details of a term to the DB
  * @author Jimmy Nguyen
- * @version 3/6/2017
+ * @version 3/8/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -338,7 +338,7 @@ public class AddTermsActivity extends AppCompatActivity
             Toast.makeText(this,
                     "Duplicate term number, please try another.", Toast.LENGTH_SHORT).show();
         }
-        
+
         // Close cursor
         c.close();
 

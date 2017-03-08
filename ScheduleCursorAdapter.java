@@ -1,7 +1,7 @@
 /**
  *A cursor adapter for the student planner app. Inflates and binds to a custom view.
  * @author Jimmy Nguyen
- * @version 3/6/2017
+ * @version 3/8/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -22,9 +22,6 @@ public class ScheduleCursorAdapter extends CursorAdapter {
     private static final int mentorsActivity = 3;
     private static final int assessmentsActivity = 4;
     private final int activity;
-
-    // Array of types of assessments
-    private final String[] assessments = {"Objective Assessment", "Performance Assessment"};
 
     /**
      * Constructs the adapter.
@@ -81,11 +78,9 @@ public class ScheduleCursorAdapter extends CursorAdapter {
                 tv.setText(mentorName);
                 break;
             case assessmentsActivity:
-                String assessmentCourse = cursor
-                        .getString(cursor.getColumnIndex(DBOpenHelper.ASSESSMENT_COURSE));
-                String setText = assessmentCourse + " - " + assessments[
-                        cursor.getInt(cursor.getColumnIndex(DBOpenHelper.ASSESSMENT_TYPE))];
-                tv.setText(setText);
+                String assessmentName = cursor
+                        .getString(cursor.getColumnIndex(DBOpenHelper.ASSESSMENT_NAME));
+                tv.setText(assessmentName);
                 break;
         }
     }

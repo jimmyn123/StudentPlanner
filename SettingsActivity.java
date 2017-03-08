@@ -3,7 +3,7 @@
  * upcoming course due dates.
  *
  * @author Jimmy Nguyen
- * @version 3/6/2017
+ * @version 3/8/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -65,19 +65,45 @@ public class SettingsActivity extends AppCompatActivity {
      */
     @Override
     protected void onStop() {
+        // Alarm ID
+        int alarmID = 0;
+
         // Gets the SharedPreferences
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean notifications = sp.getBoolean("notifications", true);
+        boolean notifications = sp.getBoolean("notificationsCourses", true);
 
         // Queries the database for the courses and end dates
         Cursor cursor = getContentResolver().query(
                 ScheduleProvider.CONTENT_COURSES_URI, null, null, null, null);
 
-        // This only runs if there is a result
-        if (cursor != null) {
+        alarmID = createNotifications(notifications, cursor, DBOpenHelper.COURSE_NAME,
+                DBOpenHelper.COURSE_END, alarmID, true);
+
+        notifications = sp.getBoolean("notificationsAssessment", true);
+        // Queries the database for the assessments and end dates
+        cursor = getContentResolver().query(
+                ScheduleProvider.CONTENT_ASSESSMENTS_URI, null, null, null, null);
+        createNotifications(notifications, cursor, DBOpenHelper.ASSESSMENT_NAME,
+                DBOpenHelper.ASSESSMENT_DUE_DATE, alarmID, false);
+
+        super.onStop();
+    }
+
+    /**
+     * Helper function that takes in parameters, sets a notifcation and returns an alarmID
+     * @param notify True or false if the alarm should be set
+     * @param c the cursor
+     * @param name name to put in the alarm
+     * @param endString end date
+     * @param alarmID alarmID to return/save
+     * @return returns the alarmID that it last ended with
+     */
+    private int createNotifications(Boolean notify, Cursor c, String name,
+                                    String endString, int alarmID, boolean courseBool) {
+        // This only runs if there is a cursor
+        if (c != null) {
             try { // Runs only if there is something in cursor
-                int alarmID = 0;
-                while (cursor.moveToNext()) {
+                while (c.moveToNext()) {
                     // Gets today's date
                     Calendar today = Calendar.getInstance();
 
@@ -85,8 +111,8 @@ public class SettingsActivity extends AppCompatActivity {
                     Calendar alarm = Calendar.getInstance();
 
                     // Gets the end date to set reminder
-                    String[] date = cursor.getString(
-                            cursor.getColumnIndex(DBOpenHelper.COURSE_END)).split("/");
+                    String[] date = c.getString(
+                            c.getColumnIndex(endString)).split("/");
                     // Sets the date of the reminder
                     alarm.set(Integer.parseInt(date[2]),
                             (Integer.parseInt(date[0]) - 1), Integer.parseInt(date[1]));
@@ -94,9 +120,10 @@ public class SettingsActivity extends AppCompatActivity {
                     // New intent and to get a PendingIntent
                     Intent intent = new Intent(this, AlarmReceiver.class);
                     // Adds the name nad alarm ID into the extras
-                    intent.putExtra("course",
-                            cursor.getString(cursor.getColumnIndex(DBOpenHelper.COURSE_NAME)));
+                    intent.putExtra("name", c.getString(c.getColumnIndex(name)));
                     intent.putExtra("alarmID", alarmID);
+                    intent.putExtra("course", courseBool);
+
                     // Gets a PendingIntent that sends a broadcast
                     PendingIntent pi = PendingIntent.getBroadcast(this, alarmID, intent,
                             PendingIntent.FLAG_CANCEL_CURRENT);
@@ -108,16 +135,16 @@ public class SettingsActivity extends AppCompatActivity {
                     if (alarm.after(today)) {
                         // Only sets a new alarm if notifications is set to true in preferences
                         alarm.add(Calendar.DAY_OF_MONTH, -1);
-                        if (notifications) am.set(AlarmManager.RTC, alarm.getTimeInMillis(), pi);
+                        if (notify) am.set(AlarmManager.RTC, alarm.getTimeInMillis(), pi);
                     }
                     // Increments for the alarmID
                     alarmID += 1;
                 }
             } finally {
                 // Closes the cursor
-                cursor.close();
+                c.close();
             }
         }
-        super.onStop();
+        return alarmID;
     }
 }

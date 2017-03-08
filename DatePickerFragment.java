@@ -2,7 +2,7 @@
  * A DatePicker fragment that extends from a DialogFragment.
  * Creates a new dialogue to select a date.
  * @author Jimmy Nguyen
- * @version 1/23/2017
+ * @version 3/8/2017
  */
 
 package com.example.studentplanner.studentplanner;
@@ -20,6 +20,7 @@ public class DatePickerFragment extends DialogFragment {
     // constants that represent which activity is using the fragment
     private static final int termsActivity = 1;
     private static final int coursesActivity = 2;
+    private static final int assessmentActivity = 3;
 
     /**
      * Constructs a new dialogue for picking dates.
@@ -41,6 +42,8 @@ public class DatePickerFragment extends DialogFragment {
             case coursesActivity:
                 listener = (AddCoursesActivity)getActivity();
                 break;
+            case assessmentActivity:
+                listener = (AddAssessmentsActivity)getActivity();
         }
         // returns today's date as the default
         return new DatePickerDialog(getActivity(), listener,

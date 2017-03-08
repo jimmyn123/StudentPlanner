@@ -1,7 +1,7 @@
 /**
  * The helper class used to create and access the internal database.
  * @author Jimmy nguyen
- * @version 3/6/2017
+ * @version 3/8/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -14,7 +14,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DBOpenHelper extends SQLiteOpenHelper {
     // Database name and version constants
     private static final String DATABASE_NAME = "schedule.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 9;
 
     // Column names for the terms table
     public static final String TABLE_TERMS = "terms";
@@ -82,7 +82,7 @@ public class DBOpenHelper extends SQLiteOpenHelper {
     // Column names for the assessments table
     public static final String TABLE_ASSESSMENTS = "assessments";
     public static final String ASSESSMENT_ID = "_id";
-    public static final String ASSESSMENT_COURSE = "assessmentName";
+    public static final String ASSESSMENT_NAME = "assessmentName";
     public static final String ASSESSMENT_COURSE_ID = "assessmentCourseID";
     public static final String ASSESSMENT_TYPE = "assessmentType";
     public static final String ASSESSMENT_DUE_DATE = "assessmentDueDate";
@@ -91,14 +91,14 @@ public class DBOpenHelper extends SQLiteOpenHelper {
     public static final String ASSESSMENT_CREATED = "assessmentCreated";
 
     // Array of all the columns in assessments
-    public static final String[] ASSESSMENT_COLUMNS = {ASSESSMENT_ID, ASSESSMENT_COURSE,
+    public static final String[] ASSESSMENT_COLUMNS = {ASSESSMENT_ID, ASSESSMENT_NAME,
             ASSESSMENT_COURSE_ID, ASSESSMENT_TYPE, ASSESSMENT_DUE_DATE, ASSESSMENT_NOTES,
             ASSESSMENT_PICTURE, ASSESSMENT_CREATED};
 
     // The sql statement to create the assessments table
     public static final String ASSESSMENTS_CREATE = "CREATE TABLE " + TABLE_ASSESSMENTS +
             " (" + ASSESSMENT_ID  + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-            ASSESSMENT_COURSE + " TEXT, " + ASSESSMENT_COURSE_ID + " INTEGER, " +
+            ASSESSMENT_NAME + " TEXT, " + ASSESSMENT_COURSE_ID + " INTEGER, " +
             ASSESSMENT_TYPE + " INTEGER, " + ASSESSMENT_DUE_DATE + " TEXT, " +
             ASSESSMENT_NOTES + " TEXT, " + ASSESSMENT_PICTURE + " TEXT, " +
             ASSESSMENT_CREATED + " TEXT default CURRENT_TIMESTAMP" + ")";

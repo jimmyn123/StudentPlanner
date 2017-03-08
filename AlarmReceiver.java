@@ -1,7 +1,7 @@
 /**
  * The alarm receiver class. Creates a notification that tells which class is due soon.
  * @author Jimmy Nguyen
- * @version 3/5/2017
+ * @version 3/8/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -24,16 +24,20 @@ public class AlarmReceiver extends BroadcastReceiver {
      */
     @Override
     public void onReceive(Context context, Intent intent) {
-        // Gets the extras
-        String course = intent.getStringExtra("course");
-        int alarmID = intent.getIntExtra("alarmID", -1);
 
-        // Builds a new notifcation
+
+        // Gets the extras
+        String name = intent.getStringExtra("name");
+        int alarmID = intent.getIntExtra("alarmID", -1);
+        boolean courseActivity = intent.getBooleanExtra("course", true);
+
+        // Builds a new notification
         Notification.Builder builder = new Notification.Builder(context);
         builder.setSmallIcon(R.drawable.ic_calendar_today_white_18dp)
                 .setContentTitle("Upcoming due date")
-                .setContentText("You have an upcoming due date for: " + course)
                 .setPriority(Notification.PRIORITY_HIGH);
+
+        String text = "You have an upcoming course: " + name;
 
         // Gets the shared preferences and sets vibrate if true
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
@@ -43,6 +47,14 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         //Create a new intent
         Intent openIntent= new Intent(context, CoursesActivity.class);
+
+        // If it is an assessment, then change the intent
+        if(!courseActivity){
+            openIntent = new Intent(context, AssessmentsActivity.class);
+            text = "You have an upcoming assessment: " + name;
+        }
+        builder.setContentText(text);
+
         // Adds the intent and parent to the taskstack
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addNextIntentWithParentStack(openIntent);

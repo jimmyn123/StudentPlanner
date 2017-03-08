@@ -1,7 +1,7 @@
 /**
  * The custom content provider for the Schedule Planner app.
  * @author Jimmy nguyen
- * @version 3/6/2017
+ * @version 3/8/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -312,10 +312,10 @@ public class ScheduleProvider extends ContentProvider {
                 returnTableCreated = DBOpenHelper.MENTOR_NAME;
                 break;
             case ASSESSMENT_BASE:
-                returnTableCreated = DBOpenHelper.ASSESSMENT_COURSE;
+                returnTableCreated = DBOpenHelper.ASSESSMENT_NAME;
                 break;
             case ASSESSMENT_ID:
-                returnTableCreated = DBOpenHelper.ASSESSMENT_COURSE;
+                returnTableCreated = DBOpenHelper.ASSESSMENT_NAME;
                 break;
         }
         // returns the sort
