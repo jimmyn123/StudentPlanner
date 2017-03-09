@@ -55,7 +55,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         }
         builder.setContentText(text);
 
-        // Adds the intent and parent to the taskstack
+        // Adds the intent and parent to the BackStack
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
         stackBuilder.addNextIntentWithParentStack(openIntent);
         // Get the PendingIntent and set

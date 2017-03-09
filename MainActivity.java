@@ -1,7 +1,7 @@
 /**
  * The main activity class. Provides navigation to the other activities.
  * @author Jimmy nguyen
- * @version 3/2/2017
+ * @version 3/8/2017
  */
 
 package com.example.studentplanner.studentplanner;
@@ -91,11 +91,11 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu and sets the text for each menu item
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        menu.add(Menu.NONE, 0, Menu.NONE, "View Terms");
-        menu.add(Menu.NONE, 1, Menu.NONE, "View Courses");
-        menu.add(Menu.NONE, 2, Menu.NONE, "View Mentors");
-        menu.add(Menu.NONE, 3, Menu.NONE, "View Assessments");
-        menu.add(Menu.NONE, 4, Menu.NONE, "Settings");
+        menu.add(Menu.NONE, 0, Menu.NONE, R.string.view_terms);
+        menu.add(Menu.NONE, 1, Menu.NONE, R.string.view_courses);
+        menu.add(Menu.NONE, 2, Menu.NONE, R.string.view_mentors);
+        menu.add(Menu.NONE, 3, Menu.NONE, R.string.view_assessments);
+        menu.add(Menu.NONE, 4, Menu.NONE, R.string.settings);
         return true;
     }
 

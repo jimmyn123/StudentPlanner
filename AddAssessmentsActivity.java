@@ -64,10 +64,12 @@ public class AddAssessmentsActivity extends AppCompatActivity
     private static final int CAMERA_REQUEST_CODE = 777;
     private EditText assessmentNotesEditor, goalEditor;
     private ImageView iv;
-    private String action, filter, assessmentNotes, imagePath, savedEndDate, endDate;
-    private int assessmentCourseID, assessmentTypeID;
+    private String action;
+    private String filter;
+    private String imagePath;
+    private String savedEndDate;
+    private String endDate;
     private Spinner courseName, assessmentType;
-    private ArrayAdapter<String> adapterCourse, adapterType;
     private Drawable editTextBackground;
 
     // Regex for date
@@ -162,7 +164,7 @@ public class AddAssessmentsActivity extends AppCompatActivity
         }
 
         // Create an adapterCourse for the data and place it in a pre-defined layout
-        adapterCourse = new ArrayAdapter<>(this, R.layout.spinner_item, courseNames);
+        ArrayAdapter<String> adapterCourse = new ArrayAdapter<>(this, R.layout.spinner_item, courseNames);
         adapterCourse.setDropDownViewResource(R.layout.spinner_item);
 
         // Finds the courseName view and sets the adapterCourse to display the data
@@ -175,7 +177,7 @@ public class AddAssessmentsActivity extends AppCompatActivity
         courseTypes.add("Performance Assessment");
 
         // Create an adapterCourse for the data and place it in a pre-defined layout
-        adapterType = new ArrayAdapter<>(this, R.layout.spinner_item, courseTypes);
+        ArrayAdapter<String> adapterType = new ArrayAdapter<>(this, R.layout.spinner_item, courseTypes);
 
         // Finds the assessment type view and sets the adapterCourse to display the data
         assessmentType = (Spinner) findViewById(R.id.assessmentType);
@@ -234,13 +236,13 @@ public class AddAssessmentsActivity extends AppCompatActivity
                 // Move to the beginning and load all of the data from the DB to the views
                 cursor.moveToFirst();
 
-                assessmentCourseID = cursor.getInt(
+                int assessmentCourseID = cursor.getInt(
                         cursor.getColumnIndex(DBOpenHelper.ASSESSMENT_COURSE_ID));
                 courseName.setSelection(assessmentCourseID);
-                assessmentTypeID = cursor.getInt(
+                int assessmentTypeID = cursor.getInt(
                         cursor.getColumnIndex(DBOpenHelper.ASSESSMENT_TYPE));
                 assessmentType.setSelection(assessmentTypeID);
-                assessmentNotes = cursor.getString(
+                String assessmentNotes = cursor.getString(
                         cursor.getColumnIndex(DBOpenHelper.ASSESSMENT_NOTES));
                 assessmentNotesEditor.setText(assessmentNotes);
                 savedEndDate = cursor.getString(
@@ -586,7 +588,7 @@ public class AddAssessmentsActivity extends AppCompatActivity
     }
 
     /**
-     * Helper function that takes in parameters, sets a notifcation and returns an alarmID
+     * Helper function that takes in parameters, sets a notification and returns an alarmID
      * @param notify True or false if the alarm should be set
      * @param c the cursor
      * @param name name to put in the alarm
@@ -649,10 +651,6 @@ public class AddAssessmentsActivity extends AppCompatActivity
      * @param view input view
      */
     public void openDateCourses(View view) {
-        // Finds the name of the clicked button and parses it
-        String name = getResources()
-                .getResourceEntryName(view.getId()).substring(0, 3).trim().toLowerCase();
-
         // Creates a new DatePicker and adds an argument to tell which activity is calling it
         DatePickerFragment dpf = new DatePickerFragment();
         Bundle args = new Bundle();

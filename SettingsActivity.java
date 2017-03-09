@@ -90,7 +90,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     /**
-     * Helper function that takes in parameters, sets a notifcation and returns an alarmID
+     * Helper function that takes in parameters, sets a notification and returns an alarmID
      * @param notify True or false if the alarm should be set
      * @param c the cursor
      * @param name name to put in the alarm

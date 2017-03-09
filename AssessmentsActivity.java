@@ -2,7 +2,7 @@
  * Assessments activity. Displays the added assessments and loads it from the database.
  *
  * @author Jimmy Nguyen
- * @version 3/5/2017
+ * @version 3/8/2017
  */
 
 package com.example.studentplanner.studentplanner;
@@ -161,7 +161,7 @@ implements LoaderManager.LoaderCallbacks<Cursor>{
     }
 
     /**
-     * Goes back to the latest action from the Backstack.
+     * Goes back to the latest action from the BackStack.
      */
     @Override
     public void onBackPressed() {
@@ -172,7 +172,7 @@ implements LoaderManager.LoaderCallbacks<Cursor>{
      * Creates the cursor loader.
      * @param id id number of the loader
      * @param args extra arguments
-     * @return returns a new Cursorloader
+     * @return returns a new CursorLoader
      */
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {

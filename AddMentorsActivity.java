@@ -1,7 +1,7 @@
 /**
  * The Activity for adding and displaying the details of a mentor to the DB
  * @author Jimmy Nguyen
- * @version 3/6/2017
+ * @version 3/8/2017
  */
 package com.example.studentplanner.studentplanner;
 
@@ -131,7 +131,7 @@ public class AddMentorsActivity extends AppCompatActivity {
                             // Goes to the AddCoursesActivity if the user wants to add
                             if(which == DialogInterface.BUTTON_POSITIVE){
                                 Intent intent = new Intent(AddMentorsActivity.this, AddCoursesActivity.class);
-                                // Creates the backstack and sets parent to Terms activity
+                                // Creates the BackStack and sets parent to Terms activity
                                 TaskStackBuilder stackBuilder =
                                         TaskStackBuilder.create(AddMentorsActivity.this);
                                 stackBuilder.addNextIntentWithParentStack(intent);

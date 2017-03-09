@@ -90,7 +90,7 @@ public class AddTermsActivity extends AppCompatActivity
         // Gets the extra content to determine if this is a specific item
         Uri uri = intent.getParcelableExtra(ScheduleProvider.CONTENT_TERM_TYPE);
         if(uri == null){
-            // Not a specific item, so not editting but inserting
+            // Not a specific item, so not editing but inserting
             action = Intent.ACTION_INSERT;
             setTitle("Add New Term");
         }
@@ -337,10 +337,10 @@ public class AddTermsActivity extends AppCompatActivity
             matches = false;
             Toast.makeText(this,
                     "Duplicate term number, please try another.", Toast.LENGTH_SHORT).show();
-        }
 
-        // Close cursor
-        c.close();
+            // Close cursor
+            c.close();
+        }
 
         return matches;
     }

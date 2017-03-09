@@ -64,9 +64,7 @@ public class AddCoursesActivity extends AppCompatActivity
     private EditText courseNameEditor, startEditor, endEditor, dateDisplay, notesEditor;
     private String action, courseFilter, startDate, endDate, savedEndDate, imagePath;
     private Calendar startCal, endCal;
-    private int courseStatusID;
     private Spinner spinner, courseStatus;
-    private ArrayAdapter<String> adapterStatus;
     private ImageView iv;
     private boolean start;
     private Drawable editTextBackground;
@@ -124,7 +122,7 @@ public class AddCoursesActivity extends AppCompatActivity
         listStatus.add("Plan to take");
 
         // Create an adapterCourse for the data and place it in a pre-defined layout
-        adapterStatus = new ArrayAdapter<>(this, R.layout.spinner_item, listStatus);
+        ArrayAdapter<String> adapterStatus = new ArrayAdapter<>(this, R.layout.spinner_item, listStatus);
 
         // Finds the assessment type view and sets the adapterCourse to display the data
         courseStatus = (Spinner) findViewById(R.id.courseStatus);
@@ -319,7 +317,7 @@ public class AddCoursesActivity extends AppCompatActivity
                 endCal.set(Integer.parseInt(d[2]),
                         Integer.parseInt(d[0])-1, Integer.parseInt(d[1]));
 
-                courseStatusID = cursor.getInt(cursor.getColumnIndex(DBOpenHelper.COURSE_STATUS));
+                int courseStatusID = cursor.getInt(cursor.getColumnIndex(DBOpenHelper.COURSE_STATUS));
                 courseStatus.setSelection(courseStatusID);
 
                 String notes = cursor.getString(cursor.getColumnIndex(DBOpenHelper.COURSE_NOTES));
@@ -734,9 +732,6 @@ public class AddCoursesActivity extends AppCompatActivity
     /**
      * Helper function that resets the alarms if an item was modified or deleted.
      */
-    /**
-     * Helper function that resets the alarms if an item was modified or deleted.
-     */
     private void updateAlarms() {
         // Alarm ID
         int alarmID = 0;
@@ -761,7 +756,7 @@ public class AddCoursesActivity extends AppCompatActivity
     }
 
     /**
-     * Helper function that takes in parameters, sets a notifcation and returns an alarmID
+     * Helper function that takes in parameters, sets a notification and returns an alarmID
      * @param notify True or false if the alarm should be set
      * @param c the cursor
      * @param name name to put in the alarm

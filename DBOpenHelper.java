@@ -9,7 +9,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-// Most access modifiers are public in case others need to use the contentprovider to access the DB.
+// Most access modifiers are public in case others need to use the ContentProvider to access the DB.
 @SuppressWarnings("WeakerAccess")
 public class DBOpenHelper extends SQLiteOpenHelper {
     // Database name and version constants
